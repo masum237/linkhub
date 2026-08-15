@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 const redis = new Redis(process.env.REDIS_URL);
@@ -6,17 +7,25 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    const keys = await redis.keys("short:*");
+    const cookieStore = cookies();
+    const userEmail = cookieStore.get("user_email")?.value;
+
+    if (!userEmail) {
+      return NextResponse.json({ success: false, error: "Unauthorized", links: [] }, { status: 401 });
+    }
+
+    // শুধুমাত্র এই ইউজারের লিস্টে থাকা লিংকগুলোর কোডগুলো আনা
+    const rawLinks = await redis.lrange(`links:${userEmail}`, 0, -1);
     const links = [];
-    
-    for (const key of keys) {
-      const code = key.replace("short:", "");
-      const data = await redis.get(key);
-      if (data) {
-        const parsed = JSON.parse(data);
+
+    for (const item of rawLinks) {
+      const parsed = JSON.parse(item);
+      const code = parsed.code;
+
+      if (code) {
+        // ক্লিকের সংখ্যা এবং সাব-ডাটা ফেচ করা
         const clicks = (await redis.get(`link:clicks:${code}`)) || 0;
 
-        // নির্দিষ্ট লিংকের কান্ট্রি, ডিভাইস ও প্ল্যাটফর্ম ফেচ করা
         const fetchSubData = async (pattern) => {
           const subKeys = await redis.keys(pattern);
           const obj = {};
@@ -32,18 +41,18 @@ export async function GET() {
         const devices = await fetchSubData(`link:${code}:device:*`);
         const platforms = await fetchSubData(`link:${code}:platform:*`);
 
-        links.push({ 
-          code, 
-          clicks: Number(clicks), 
-          countries, 
-          devices, 
-          platforms, 
-          ...parsed 
+        links.push({
+          ...parsed,
+          clicks: Number(clicks),
+          countries,
+          devices,
+          platforms,
         });
       }
     }
+
     return NextResponse.json({ success: true, links });
   } catch (error) {
-    return NextResponse.json({ success: false, links: [] });
+    return NextResponse.json({ success: false, links: [] }, { status: 500 });
   }
 }
