@@ -31,7 +31,7 @@ export default function Dashboard() {
   // Single Link Stats Modal State
   const [selectedLinkStats, setSelectedLinkStats] = useState(null);
 
-  // Three-dot Menu Open State (stores link code)
+  // Three-dot Menu Open State
   const [openMenuCode, setOpenMenuCode] = useState(null);
 
   useEffect(() => {
@@ -164,9 +164,8 @@ export default function Dashboard() {
       <div style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto" }}>
         
         {/* Dashboard Tab */}
-        {(activeTab === "dashboard" || activeTab === "links") && (
+        {activeTab === "dashboard" && (
           <div>
-            {/* Top Stat Cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", marginBottom: "30px" }}>
               <div style={{ padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
                 <p style={{ color: "#64748b", fontSize: "12px", fontWeight: "700", margin: "0 0 8px 0" }}>TOTAL LINKS</p>
@@ -182,7 +181,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Chart Box */}
             <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", border: "1px solid #e2e8f0", marginBottom: "40px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
               <div style={{ height: "180px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", position: "relative" }}>
                 <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "#94a3b8", fontSize: "14px" }}>
@@ -192,37 +190,69 @@ export default function Dashboard() {
               <p style={{ color: "#64748b", fontSize: "12px", margin: "15px 0 0 0" }}>ℹ️ Chart automatically refreshes. Data from active tracking.</p>
             </div>
 
-            {/* Links Section Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#0f172a" }}>Links</h3>
+              <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#0f172a" }}>Recent Links</h3>
               <button onClick={() => setShowCreateModal(true)} style={{ padding: "10px 20px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "14px" }}>+ Create link</button>
             </div>
 
-            {/* Links List Box */}
             <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", overflow: "hidden" }}>
               <div style={{ padding: "15px 20px", borderBottom: "1px solid #e2e8f0", fontWeight: "600", fontSize: "14px", color: "#64748b" }}>Link</div>
-              
               {linksList.length === 0 ? (
-                <div style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>No links created yet. Click &quot;Create link&quot; above.</div>
+                <div style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>No links created yet.</div>
               ) : (
-                linksList.map(item => (
+                linksList.slice(0, 5).map(item => (
                   <div key={item.code} style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
                     <div style={{ wordBreak: "break-all" }}>
                       <a href={`/r?code=${item.code}`} target="_blank" style={{ color: "#0d9488", fontWeight: "700", fontSize: "15px", textDecoration: "none" }}>{window.location.origin}/r?code={item.code}</a>
                       <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>💻 {item.desktopUrl}</div>
                     </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span style={{ background: "#f1f5f9", padding: "6px 12px", borderRadius: "6px", fontSize: "13px", fontWeight: "600", color: "#334155" }}>🔥 {item.clicks || 0}</span>
+                      <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/r?code=${item.code}`)} title="Copy Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 10px", borderRadius: "6px", cursor: "pointer" }}>📋</button>
+                      <button onClick={() => handleDelete(item.code)} title="Delete Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 10px", borderRadius: "6px", cursor: "pointer" }}>🗑️</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Short Links Tab (Dedicated Page) */}
+        {activeTab === "links" && (
+          <div style={{ maxWidth: "900px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px" }}>
+              <div>
+                <h2 style={{ fontSize: "24px", fontWeight: "700", margin: "0 0 5px 0", color: "#0f172a" }}>Short Links</h2>
+                <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>Total Links Created: <b>{linksList.length}</b></p>
+              </div>
+              <button onClick={() => setShowCreateModal(true)} style={{ padding: "10px 18px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>+ New Link</button>
+            </div>
+
+            <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+              <div style={{ padding: "15px 20px", borderBottom: "1px solid #e2e8f0", fontWeight: "600", fontSize: "14px", color: "#64748b" }}>All Links Directory</div>
+              {linksList.length === 0 ? (
+                <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>No short links found. Click &quot;+ New Link&quot; to create one.</div>
+              ) : (
+                linksList.map(item => (
+                  <div key={item.code} style={{ padding: "18px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "15px" }}>
+                    <div style={{ wordBreak: "break-all" }}>
+                      <a href={`/r?code=${item.code}`} target="_blank" style={{ color: "#0d9488", fontWeight: "700", fontSize: "16px", textDecoration: "none" }}>{window.location.origin}/r?code={item.code}</a>
+                      <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>💻 Desktop: {item.desktopUrl}</div>
+                      <div style={{ fontSize: "12px", color: "#64748b" }}>📱 Mobile: {item.mobileUrl}</div>
+                    </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                       {/* Click Badge */}
                       <span style={{ background: "#f1f5f9", padding: "6px 12px", borderRadius: "6px", fontSize: "13px", fontWeight: "600", color: "#334155" }}>
-                        🔥 {item.clicks || 0}
+                        🔥 {item.clicks || 0} Clicks
                       </span>
 
                       {/* Copy Icon */}
-                      <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/r?code=${item.code}`)} title="Copy Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 10px", borderRadius: "6px", cursor: "pointer" }}>📋</button>
+                      <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/r?code=${item.code}`)} title="Copy" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 10px", borderRadius: "6px", cursor: "pointer" }}>📋</button>
                       
                       {/* Delete Icon */}
-                      <button onClick={() => handleDelete(item.code)} title="Delete Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 10px", borderRadius: "6px", cursor: "pointer" }}>🗑️</button>
+                      <button onClick={() => handleDelete(item.code)} title="Delete" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "8px 10px", borderRadius: "6px", cursor: "pointer" }}>🗑️</button>
 
                       {/* Three-dot menu */}
                       <div style={{ position: "relative" }}>
