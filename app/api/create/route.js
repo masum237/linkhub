@@ -5,21 +5,19 @@ const redis = new Redis(process.env.REDIS_URL);
 
 export async function POST(request) {
   try {
-    const { subdomain, desktopUrl, mobileUrl } = await request.json();
+    const { desktopUrl, mobileUrl } = await request.json();
     
-    if (!subdomain || !desktopUrl || !mobileUrl) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    if (!desktopUrl || !mobileUrl) {
+      return NextResponse.json({ error: "Both URLs are required" }, { status: 400 });
     }
 
-    const exists = await redis.get(`link:${subdomain}`);
-    if (exists) {
-      return NextResponse.json({ error: "Subdomain already taken" }, { status: 400 });
-    }
+    // ৫ অক্ষরের একটি রেন্ডম ইউনিক কোড জেনারেট করা
+    const code = Math.random().toString(36.substring(2), 7).substring(2, 7);
 
-    await redis.set(`link:${subdomain}`, JSON.stringify({ desktopUrl, mobileUrl }));
+    await redis.set(`short:${code}`, JSON.stringify({ desktopUrl, mobileUrl }));
     await redis.incr("total_links");
 
-    return NextResponse.json({ success: true, subdomain });
+    return NextResponse.json({ success: true, code });
   } catch (error) {
     return NextResponse.json({ error: "Database Error: " + error.message }, { status: 500 });
   }
