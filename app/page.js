@@ -120,7 +120,6 @@ export default function Dashboard() {
             <h2 style={{ color: "#fff", fontSize: "24px", fontWeight: "800", margin: "0 0 5px 0" }}>🔗 LinkHub</h2>
             <p style={{ color: "#94a3b8", fontSize: "13px", margin: 0 }}>Smart URL Shortener & Device Redirector</p>
           </div>
-          {/* প্লেসহোল্ডার থেকে সিক্রেট টেক্সট সরিয়ে সাধারণ করা হলো */}
           <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "15px", boxSizing: "border-box", outline: "none" }} />
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "20px", boxSizing: "border-box", outline: "none" }} />
           <button type="submit" style={{ width: "100%", padding: "12px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Login to LinkHub</button>
@@ -141,7 +140,7 @@ export default function Dashboard() {
             { id: "links", label: "🔗 Short Links" },
             { id: "stats", label: "📈 Statistics" }
           ].map(t => (
-            <div key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: "12px 16px", cursor: "pointer", borderRadius: "10px", fontWeight: "600", fontSize: "14px", background: activeTab === t.id ? "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" : "transparent", color: activeTab === t.id ? "#fff" : "#94a3b8" }}>{t.label}</div>
+            <div key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: "12px 16px", cursor: "pointer", borderRadius: "10px", fontWeight: "600", fontSize: "14px", background: activeTab === t.id ? "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%" : "transparent", color: activeTab === t.id ? "#fff" : "#94a3b8" }}>{t.label}</div>
           ))}
         </div>
         <button onClick={() => { localStorage.clear(); sessionStorage.clear(); location.reload(); }} style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "10px", cursor: "pointer", fontWeight: "600" }}>🚪 Logout</button>
@@ -214,12 +213,34 @@ export default function Dashboard() {
 
             {/* Individual Link Stats Modal */}
             {selectedLinkStats && (
-              <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
-                <div style={{ background: "#1e293b", padding: "30px", borderRadius: "16px", width: "400px", border: "1px solid #334155" }}>
-                  <h3 style={{ margin: "0 0 15px 0", color: "#f8fafc" }}>📊 Link Statistics</h3>
-                  <p style={{ fontSize: "14px", color: "#cbd5e1", wordBreak: "break-all" }}><b>Short Link:</b> {window.location.origin}/r?code={selectedLinkStats.code}</p>
-                  <p style={{ fontSize: "15px", color: "#10b981", marginTop: "10px" }}><b>Total Clicks:</b> {selectedLinkStats.clicks || 0}</p>
-                  <button onClick={() => setSelectedLinkStats(null)} style={{ marginTop: "20px", width: "100%", padding: "10px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Close</button>
+              <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "20px" }}>
+                <div style={{ background: "#1e293b", padding: "30px", borderRadius: "16px", width: "100%", maxWidth: "450px", border: "1px solid #334155", maxHeight: "85vh", overflowY: "auto" }}>
+                  <h3 style={{ margin: "0 0 15px 0", color: "#f8fafc", fontSize: "20px" }}>📊 Detailed Link Statistics</h3>
+                  <p style={{ fontSize: "13px", color: "#cbd5e1", wordBreak: "break-all", marginBottom: "15px" }}><b>Link:</b> {window.location.origin}/r?code={selectedLinkStats.code}</p>
+                  <p style={{ fontSize: "16px", color: "#10b981", marginBottom: "20px", fontWeight: "700" }}>🔥 Total Clicks: {selectedLinkStats.clicks || 0}</p>
+                  
+                  {/* Countries */}
+                  <div style={{ marginBottom: "15px" }}>
+                    <h4 style={{ fontSize: "14px", color: "#38bdf8", marginBottom: "8px" }}>🌍 Countries:</h4>
+                    {Object.keys(selectedLinkStats.countries || {}).length === 0 ? <p style={{ fontSize: "12px", color: "#94a3b8" }}>No data</p> :
+                      Object.entries(selectedLinkStats.countries).map(([k, v]) => <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}><span style={{ color: "#cbd5e1" }}>{k}</span><b>{v}</b></div>)}
+                  </div>
+
+                  {/* Devices */}
+                  <div style={{ marginBottom: "15px" }}>
+                    <h4 style={{ fontSize: "14px", color: "#38bdf8", marginBottom: "8px" }}>💻 Devices:</h4>
+                    {Object.keys(selectedLinkStats.devices || {}).length === 0 ? <p style={{ fontSize: "12px", color: "#94a3b8" }}>No data</p> :
+                      Object.entries(selectedLinkStats.devices).map(([k, v]) => <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}><span style={{ color: "#cbd5e1" }}>{k}</span><b>{v}</b></div>)}
+                  </div>
+
+                  {/* Platforms */}
+                  <div style={{ marginBottom: "20px" }}>
+                    <h4 style={{ fontSize: "14px", color: "#38bdf8", marginBottom: "8px" }}>🖥️ Platforms / OS:</h4>
+                    {Object.keys(selectedLinkStats.platforms || {}).length === 0 ? <p style={{ fontSize: "12px", color: "#94a3b8" }}>No data</p> :
+                      Object.entries(selectedLinkStats.platforms).map(([k, v]) => <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}><span style={{ color: "#cbd5e1" }}>{k}</span><b>{v}</b></div>)}
+                  </div>
+
+                  <button onClick={() => setSelectedLinkStats(null)} style={{ width: "100%", padding: "12px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Close</button>
                 </div>
               </div>
             )}
