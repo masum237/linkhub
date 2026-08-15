@@ -11,9 +11,10 @@ export async function GET() {
     for (const key of keys) {
       const code = key.replace("short:", "");
       const data = await redis.get(key);
+      const clicks = (await redis.get(`link:clicks:${code}`)) || 0;
       if (data) {
         const parsed = JSON.parse(data);
-        links.push({ code, ...parsed });
+        links.push({ code, clicks: Number(clicks), ...parsed });
       }
     }
     return NextResponse.json({ success: true, links });
