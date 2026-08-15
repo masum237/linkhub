@@ -5,8 +5,8 @@ const redis = new Redis(process.env.REDIS_URL);
 
 export async function POST(request) {
   try {
-    const { subdomain } = await request.json();
-    await redis.del(`link:${subdomain}`);
+    const { code } = await request.json();
+    await redis.del(`short:${code}`);
     await redis.decr("total_links");
     return NextResponse.json({ success: true });
   } catch (error) {
