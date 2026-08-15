@@ -62,7 +62,7 @@ export default function Dashboard() {
       localStorage.setItem("isLoggedIn", "true");
       setLoginError("");
     } else {
-      setLoginError("Invalid username or password! (Use: masumhub / masumhub)");
+      setLoginError("Invalid username or password!");
     }
   };
 
@@ -120,8 +120,9 @@ export default function Dashboard() {
             <h2 style={{ color: "#fff", fontSize: "24px", fontWeight: "800", margin: "0 0 5px 0" }}>🔗 LinkHub</h2>
             <p style={{ color: "#94a3b8", fontSize: "13px", margin: 0 }}>Smart URL Shortener & Device Redirector</p>
           </div>
-          <input type="text" placeholder="Username (masumhub)" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "15px", boxSizing: "border-box" }} />
-          <input type="password" placeholder="Password (masumhub)" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "20px", boxSizing: "border-box" }} />
+          {/* প্লেসহোল্ডার থেকে সিক্রেট টেক্সট সরিয়ে সাধারণ করা হলো */}
+          <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "15px", boxSizing: "border-box", outline: "none" }} />
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "20px", boxSizing: "border-box", outline: "none" }} />
           <button type="submit" style={{ width: "100%", padding: "12px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Login to LinkHub</button>
           {loginError && <p style={{ color: "#ef4444", marginTop: "12px", fontSize: "13px", textAlign: "center" }}>{loginError}</p>}
         </form>
