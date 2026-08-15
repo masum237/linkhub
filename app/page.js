@@ -29,9 +29,17 @@ export default function Dashboard() {
   const [selectedLinkStats, setSelectedLinkStats] = useState(null);
   const [openMenuCode, setOpenMenuCode] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("isLoggedIn") === "true") setIsLoggedIn(true);
+    
+    const checkScreen = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
   }, []);
 
   useEffect(() => {
@@ -111,7 +119,6 @@ export default function Dashboard() {
     fetchStatsAndLinks();
   };
 
-  // Clean SVG Icon Component
   const Icon = ({ name, size = 18, color = "currentColor" }) => {
     if (name === "copy") {
       return (
@@ -187,12 +194,14 @@ export default function Dashboard() {
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", backgroundColor: "#f8fafc", color: "#1e293b", position: "relative" }}>
       
       {/* Mobile Top Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "#ffffff", padding: "15px 20px", borderBottom: "1px solid #e2e8f0", position: "fixed", top: 0, zIndex: 100 }}>
-        <h2 style={{ fontSize: "18px", fontWeight: "800", color: "#0d9488", margin: 0 }}>🔗 LinkHub</h2>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <Icon name={sidebarOpen ? "close" : "menu"} size={24} color="#0f172a" />
-        </button>
-      </div>
+      {isMobile && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "#ffffff", padding: "15px 20px", borderBottom: "1px solid #e2e8f0", position: "fixed", top: 0, zIndex: 100, boxSizing: "border-box" }}>
+          <h2 style={{ fontSize: "18px", fontWeight: "800", color: "#0d9488", margin: 0 }}>🔗 LinkHub</h2>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+            <Icon name={sidebarOpen ? "close" : "menu"} size={24} color="#0f172a" />
+          </button>
+        </div>
+      )}
 
       {/* Sidebar */}
       <div style={{ 
@@ -203,19 +212,22 @@ export default function Dashboard() {
         display: "flex", 
         flexDirection: "column", 
         boxSizing: "border-box",
-        position: "fixed",
+        position: isMobile ? "fixed" : "sticky",
         top: 0,
-        bottom: 0,
-        left: sidebarOpen ? 0 : "-260px",
+        height: "100vh",
+        left: isMobile ? (sidebarOpen ? 0 : "-260px") : 0,
         transition: "left 0.3s ease",
         zIndex: 101,
-        boxShadow: sidebarOpen ? "5px 0 15px rgba(0,0,0,0.1)" : "none"
+        boxShadow: isMobile && sidebarOpen ? "5px 0 15px rgba(0,0,0,0.1)" : "none",
+        flexShrink: 0
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "35px" }}>
           <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#0d9488", margin: 0 }}>🔗 LinkHub</h2>
-          <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer" }}>
-            <Icon name="close" size={20} />
-          </button>
+          {isMobile && (
+            <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+              <Icon name="close" size={20} />
+            </button>
+          )}
         </div>
         
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
@@ -224,7 +236,7 @@ export default function Dashboard() {
             { id: "links", label: "🔗 Short Links" },
             { id: "stats", label: "📈 Statistics" }
           ].map(t => (
-            <div key={t.id} onClick={() => { setActiveTab(t.id); setSidebarOpen(false); }} style={{ padding: "12px 16px", cursor: "pointer", borderRadius: "10px", fontWeight: "600", fontSize: "14px", background: activeTab === t.id ? "#ccfbf1" : "transparent", color: activeTab === t.id ? "#0f766e" : "#64748b" }}>{t.label}</div>
+            <div key={t.id} onClick={() => { setActiveTab(t.id); if(isMobile) setSidebarOpen(false); }} style={{ padding: "12px 16px", cursor: "pointer", borderRadius: "10px", fontWeight: "600", fontSize: "14px", background: activeTab === t.id ? "#ccfbf1" : "transparent", color: activeTab === t.id ? "#0f766e" : "#64748b" }}>{t.label}</div>
           ))}
         </div>
 
@@ -238,7 +250,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, padding: "40px 20px", boxSizing: "border-box", overflowY: "auto", width: "100%", marginTop: "60px" }}>
+      <div style={{ flex: 1, padding: "40px 20px", boxSizing: "border-box", overflowY: "auto", width: "100%", marginTop: isMobile ? "60px" : "0" }}>
         
         {/* Dashboard Tab */}
         {activeTab === "dashboard" && (
