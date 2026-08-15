@@ -35,14 +35,20 @@ export default function Dashboard() {
   useEffect(() => {
     if (localStorage.getItem("isLoggedIn") === "true") {
       setIsLoggedIn(true);
-      fetch("/api/user")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.email) {
-            setUsername(data.email);
-          }
-        })
-        .catch(() => {});
+      const savedEmail = localStorage.getItem("user_email");
+      if (savedEmail) {
+        setUsername(savedEmail);
+      } else {
+        fetch("/api/user")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.email) {
+              setUsername(data.email);
+              localStorage.setItem("user_email", data.email);
+            }
+          })
+          .catch(() => {});
+      }
     }
 
     const checkScreen = () => setIsMobile(window.innerWidth <= 768);
@@ -93,13 +99,9 @@ export default function Dashboard() {
       if (data.success) {
         setIsLoggedIn(true);
         localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("user_email", username); // ইমেইল লোকাল স্টোরেজে সেভ করা হলো
         setLoginError("");
         showToast("Logged in successfully!");
-        fetch("/api/user")
-          .then((res) => res.json())
-          .then((userData) => {
-            if (userData.success && userData.email) setUsername(userData.email);
-          });
       } else {
         setLoginError(data.error || "Invalid email or password!");
       }
