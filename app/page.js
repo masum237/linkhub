@@ -9,6 +9,7 @@ export default function Dashboard() {
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState({ totalLinks: 0, totalVisitors: 0 });
+  const [linksList, setLinksList] = useState([]);
 
   const [subdomain, setSubdomain] = useState("");
   const [desktopUrl, setDesktopUrl] = useState("");
@@ -17,12 +18,25 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isLoggedIn) {
-      fetch("/api/stats")
-        .then((res) => res.json())
-        .then((data) => setStats(data))
-        .catch(() => console.log("Failed to load stats"));
+      fetchStatsAndLinks();
     }
   }, [isLoggedIn, message]);
+
+  const fetchStatsAndLinks = async () => {
+    try {
+      const resStats = await fetch("/api/stats");
+      const dataStats = await resStats.json();
+      setStats(dataStats);
+
+      const resLinks = await fetch("/api/links");
+      const dataLinks = await resLinks.json();
+      if (dataLinks.success) {
+        setLinksList(dataLinks.links);
+      }
+    } catch (error) {
+      console.log("Failed to fetch data");
+    }
+  };
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -50,12 +64,28 @@ export default function Dashboard() {
       setSubdomain("");
       setDesktopUrl("");
       setMobileUrl("");
+      fetchStatsAndLinks();
     } else {
       setMessage(`❌ Error: ${data.error}`);
     }
   };
 
-  // Login Page UI
+  const handleDelete = async (sub) => {
+    if (!confirm(`Are you sure you want to delete ${sub}?`)) return;
+    
+    const res = await fetch("/api/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subdomain: sub }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      fetchStatsAndLinks();
+    } else {
+      alert("Failed to delete");
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", fontFamily: "'Inter', sans-serif" }}>
@@ -67,11 +97,11 @@ export default function Dashboard() {
           <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
             <div>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#444", marginBottom: "6px" }}>Username</label>
-              <input type="text" placeholder="Enter username (admin)" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+              <input type="text" placeholder="admin" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
             </div>
             <div>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#444", marginBottom: "6px" }}>Password</label>
-              <input type="password" placeholder="Enter password (12345)" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+              <input type="password" placeholder="12345" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
             </div>
             <button type="submit" style={{ padding: "13px", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "#fff", border: "none", borderRadius: "8px", fontSize: "15px", fontWeight: "600", cursor: "pointer", marginTop: "10px", boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)" }}>Login to Dashboard</button>
             {loginError && <p style={{ color: "#e53e3e", textAlign: "center", fontSize: "13px", fontWeight: "500", margin: "5px 0 0 0" }}>{loginError}</p>}
@@ -94,8 +124,7 @@ export default function Dashboard() {
         marginBottom: "8px",
         display: "flex",
         alignItems: "center",
-        gap: "10px",
-        transition: "all 0.2s ease"
+        gap: "10px"
       }}
     >
       {label}
@@ -118,14 +147,15 @@ export default function Dashboard() {
           <MenuItem label="🌐 Domain Settings" tabName="domains" />
         </ul>
 
-        <button onClick={() => setIsLoggedIn(false)} style={{ padding: "12px", backgroundColor: "#fff5f5", color: "#e53e3e", border: "1px solid #fed7d7", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px", width: "100%", transition: "background 0.2s" }}>
+        <button onClick={() => setIsLoggedIn(false)} style={{ padding: "12px", backgroundColor: "#fff5f5", color: "#e53e3e", border: "1px solid #fed7d7", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px", width: "100%" }}>
           🚪 Logout
         </button>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div style={{ flex: 1, padding: "40px", boxSizing: "border-box", maxWidth: "1200px" }}>
         
+        {/* Tab 1: Dashboard */}
         {activeTab === "dashboard" && (
           <>
             <div style={{ marginBottom: "30px" }}>
@@ -133,20 +163,18 @@ export default function Dashboard() {
               <p style={{ color: "#718096", fontSize: "14px", margin: 0 }}>Monitor your smart link analytics and generate new redirects instantly.</p>
             </div>
             
-            {/* Stats Cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px", marginBottom: "35px" }}>
-              <div style={{ padding: "24px", backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
-                <p style={{ color: "#718096", margin: "0 0 8px 0", fontSize: "13px", fontWeight: "700", letterSpacing: "0.5px" }}>TOTAL LINKS</p>
+              <div style={{ padding: "24px", backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+                <p style={{ color: "#718096", margin: "0 0 8px 0", fontSize: "13px", fontWeight: "700" }}>TOTAL LINKS</p>
                 <h2 style={{ margin: 0, color: "#2b6cb0", fontSize: "32px", fontWeight: "800" }}>{stats.totalLinks}</h2>
               </div>
-              <div style={{ padding: "24px", backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
-                <p style={{ color: "#718096", margin: "0 0 8px 0", fontSize: "13px", fontWeight: "700", letterSpacing: "0.5px" }}>TOTAL VISITORS</p>
+              <div style={{ padding: "24px", backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+                <p style={{ color: "#718096", margin: "0 0 8px 0", fontSize: "13px", fontWeight: "700" }}>TOTAL VISITORS</p>
                 <h2 style={{ margin: 0, color: "#38a169", fontSize: "32px", fontWeight: "800" }}>{stats.totalVisitors}</h2>
               </div>
             </div>
 
-            {/* Create Link Card */}
-            <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0", maxWidth: "700px" }}>
+            <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", maxWidth: "700px" }}>
               <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#2d3748", margin: "0 0 20px 0" }}>Create Advanced Short Link</h3>
               
               <form onSubmit={handleCreateLink} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -160,15 +188,15 @@ export default function Dashboard() {
 
                 <div>
                   <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "13px", color: "#4a5568" }}>Desktop Destination URL</label>
-                  <input type="url" value={desktopUrl} onChange={(e) => setDesktopUrl(e.target.value)} placeholder="https://example.com/desktop-page" required style={{ width: "100%", padding: "12px 14px", border: "1px solid #cbd5e0", borderRadius: "8px", outline: "none", fontSize: "14px", boxSizing: "border-box" }} />
+                  <input type="url" value={desktopUrl} onChange={(e) => setDesktopUrl(e.target.value)} placeholder="https://example.com/desktop" required style={{ width: "100%", padding: "12px 14px", border: "1px solid #cbd5e0", borderRadius: "8px", outline: "none", fontSize: "14px", boxSizing: "border-box" }} />
                 </div>
 
                 <div>
                   <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "13px", color: "#4a5568" }}>Mobile Destination URL</label>
-                  <input type="url" value={mobileUrl} onChange={(e) => setMobileUrl(e.target.value)} placeholder="https://example.com/mobile-page" required style={{ width: "100%", padding: "12px 14px", border: "1px solid #cbd5e0", borderRadius: "8px", outline: "none", fontSize: "14px", boxSizing: "border-box" }} />
+                  <input type="url" value={mobileUrl} onChange={(e) => setMobileUrl(e.target.value)} placeholder="https://example.com/mobile" required style={{ width: "100%", padding: "12px 14px", border: "1px solid #cbd5e0", borderRadius: "8px", outline: "none", fontSize: "14px", boxSizing: "border-box" }} />
                 </div>
 
-                <button type="submit" style={{ padding: "14px", backgroundColor: "#319795", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "15px", cursor: "pointer", boxShadow: "0 4px 12px rgba(49, 151, 149, 0.3)", transition: "background 0.2s" }}>
+                <button type="submit" style={{ padding: "14px", backgroundColor: "#319795", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "15px", cursor: "pointer", boxShadow: "0 4px 12px rgba(49, 151, 149, 0.3)" }}>
                   ✨ Generate Short Link
                 </button>
 
@@ -182,13 +210,45 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* Other Tabs */}
-        {activeTab !== "dashboard" && (
-          <div style={{ backgroundColor: "#ffffff", padding: "40px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
-            <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#2d3748", margin: "0 0 10px 0" }}>
-              {activeTab === "links" ? "🔗 All Short Links" : activeTab === "stats" ? "📈 Detailed Statistics" : "🌐 Domain Settings"}
-            </h2>
-            <p style={{ color: "#718096", fontSize: "14px", margin: 0 }}>This section is currently active and ready for custom features.</p>
+        {/* Tab 2: Short Links List */}
+        {activeTab === "links" && (
+          <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+            <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#2d3748", margin: "0 0 20px 0" }}>🔗 All Created Short Links</h2>
+            {linksList.length === 0 ? (
+              <p style={{ color: "#718096" }}>No links created yet.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                {linksList.map((item, idx) => (
+                  <div key={idx} style={{ padding: "16px", border: "1px solid #e2e8f0", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc" }}>
+                    <div>
+                      <strong style={{ color: "#3182ce", fontSize: "15px" }}>{item.subdomain}.yourdomain.com</strong>
+                      <div style={{ fontSize: "12px", color: "#718096", marginTop: "4px" }}>💻 Desktop: {item.desktopUrl}</div>
+                      <div style={{ fontSize: "12px", color: "#718096" }}>📱 Mobile: {item.mobileUrl}</div>
+                    </div>
+                    <button onClick={() => handleDelete(item.subdomain)} style={{ padding: "8px 12px", background: "#feb2b2", color: "#9b2c2c", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>Delete</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: Statistics */}
+        {activeTab === "stats" && (
+          <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+            <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#2d3748", margin: "0 0 20px 0" }}>📈 Live Statistics</h2>
+            <p style={{ color: "#4a5568", fontSize: "15px", marginBottom: "15px" }}>Total active short links: <b>{stats.totalLinks}</b></p>
+            <p style={{ color: "#4a5568", fontSize: "15px" }}>Total visitor redirections: <b>{stats.totalVisitors}</b></p>
+          </div>
+        )}
+
+        {/* Tab 4: Domain Settings */}
+        {activeTab === "domains" && (
+          <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+            <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#2d3748", margin: "0 0 15px 0" }}>🌐 Domain Settings</h2>
+            <p style={{ color: "#718096", fontSize: "14px", lineHeight: "1.6" }}>
+              To connect your custom domain, point your wildcard DNS record (<code>*.yourdomain.com</code>) to your Vercel project deployment target.
+            </p>
           </div>
         )}
 
