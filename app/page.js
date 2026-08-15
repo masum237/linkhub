@@ -70,15 +70,25 @@ export default function Dashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (username === "masumhub" && password === "masumhub") {
-      setIsLoggedIn(true);
-      localStorage.setItem("isLoggedIn", "true");
-      setLoginError("");
-      showToast("Logged in successfully!");
-    } else {
-      setLoginError("Invalid username or password!");
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: username, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsLoggedIn(true);
+        localStorage.setItem("isLoggedIn", "true");
+        setLoginError("");
+        showToast("Logged in successfully!");
+      } else {
+        setLoginError(data.error || "Invalid email or password!");
+      }
+    } catch (err) {
+      setLoginError("Login failed. Try again.");
     }
   };
 
@@ -163,7 +173,7 @@ export default function Dashboard() {
             <h2 style={{ color: "#0f172a", fontSize: "24px", fontWeight: "800", margin: "0 0 5px 0" }}>🔗 LinkHub</h2>
             <p style={{ color: "#64748b", fontSize: "13px", margin: 0 }}>Smart URL Shortener & Analytics</p>
           </div>
-          <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#f8fafc", border: "1px solid #cbd5e1", color: "#0f172a", borderRadius: "8px", marginBottom: "15px", boxSizing: "border-box", outline: "none" }} />
+          <input type="email" placeholder="Email Address" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#f8fafc", border: "1px solid #cbd5e1", color: "#0f172a", borderRadius: "8px", marginBottom: "15px", boxSizing: "border-box", outline: "none" }} />
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#f8fafc", border: "1px solid #cbd5e1", color: "#0f172a", borderRadius: "8px", marginBottom: "20px", boxSizing: "border-box", outline: "none" }} />
           <button type="submit" style={{ width: "100%", padding: "12px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Login to LinkHub</button>
           {loginError && <p style={{ color: "#ef4444", marginTop: "12px", fontSize: "13px", textAlign: "center" }}>{loginError}</p>}
@@ -223,8 +233,8 @@ export default function Dashboard() {
 
         <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "15px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>Masum</div>
-            <div style={{ fontSize: "12px", color: "#64748b" }}>masumhub@gmail.com</div>
+            <div style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>Account</div>
+            <div style={{ fontSize: "11px", color: "#64748b", wordBreak: "break-all" }}>{username}</div>
           </div>
           <button onClick={() => { localStorage.clear(); sessionStorage.clear(); location.reload(); }} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>Logout</button>
         </div>
@@ -249,13 +259,6 @@ export default function Dashboard() {
                 <p style={{ color: "#64748b", fontSize: "11px", fontWeight: "700", margin: "0 0 6px 0" }}>DAILY VISITORS</p>
                 <h2 style={{ margin: 0, color: "#0f172a", fontSize: "24px", fontWeight: "800" }}>{stats.todayVisitors}</h2>
               </div>
-            </div>
-
-            <div style={{ background: "#ffffff", padding: "20px", borderRadius: "14px", border: "1px solid #e2e8f0", marginBottom: "30px" }}>
-              <div style={{ height: "140px", display: "flex", alignItems: "center", justifyContent: "center", borderBottom: "1px solid #e2e8f0", paddingBottom: "10px", color: "#94a3b8", fontSize: "13px", textAlign: "center" }}>
-                📊 Analytics Chart ({stats.totalVisitors} Total Visitors Recorded)
-              </div>
-              <p style={{ color: "#64748b", fontSize: "11px", margin: "12px 0 0 0" }}>ℹ️ Chart automatically refreshes.</p>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", flexWrap: "wrap", gap: "10px" }}>
