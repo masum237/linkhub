@@ -11,8 +11,8 @@ export async function POST(request) {
       return NextResponse.json({ error: "Both URLs are required" }, { status: 400 });
     }
 
-    // ৫ অক্ষরের একটি রেন্ডম ইউনিক কোড জেনারেট করা
-    const code = Math.random().toString(36.substring(2), 7).substring(2, 7);
+    // সঠিক উপায়ে ৫ অক্ষরের ইউনিক কোড জেনারেট করা
+    const code = Math.random().toString(36).substring(2, 7);
 
     await redis.set(`short:${code}`, JSON.stringify({ desktopUrl, mobileUrl }));
     await redis.incr("total_links");
