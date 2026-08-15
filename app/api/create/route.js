@@ -1,5 +1,7 @@
-import { kv } from "@vercel/kv";
+import Redis from "ioredis";
 import { NextResponse } from "next/server";
+
+const redis = new Redis(process.env.REDIS_URL);
 
 export async function POST(request) {
   try {
@@ -9,16 +11,16 @@ export async function POST(request) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
 
-    const exists = await kv.get(`link:${subdomain}`);
+    const exists = await redis.get(`link:${subdomain}`);
     if (exists) {
       return NextResponse.json({ error: "Subdomain already taken" }, { status: 400 });
     }
 
-    await kv.set(`link:${subdomain}`, { desktopUrl, mobileUrl });
-    await kv.incr("total_links");
+    await redis.set(`link:${subdomain}`, JSON.stringify({ desktopUrl, mobileUrl }));
+    await redis.incr("total_links");
 
     return NextResponse.json({ success: true, subdomain });
   } catch (error) {
-    return NextResponse.json({ error: "Database Connection Error. Please check Vercel KV bindings." }, { status: 500 });
+    return NextResponse.json({ error: "Database Error: " + error.message }, { status: 500 });
   }
 }
