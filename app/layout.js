@@ -1,15 +1,7 @@
 export const metadata = {
-  title: 'LinkHub | Smart URL Shortener & Analytics',
-  description: 'Manage, shorten, and track your links efficiently with LinkHub.',
+  title: 'LinkHub | Smart URL Shortener',
+  description: 'Smart URL Shortener & Analytics',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.svg',
   },
 };
-
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
-}
