@@ -7,7 +7,6 @@ export default function Dashboard() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   
-  // ট্যাব রিফ্রেশ হলেও যাতে সেভ থাকে (Session Storage)
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("activeTab") || "dashboard";
@@ -55,12 +54,13 @@ export default function Dashboard() {
 
   const handleLogin = (e) => {
     e.preventDefault();
+    // ইউজারনেম এবং পাসওয়ার্ড 'masumhub' সেট করা হয়েছে
     if (username === "masumhub" && password === "masumhub") {
       setIsLoggedIn(true);
       localStorage.setItem("isLoggedIn", "true");
       setLoginError("");
     } else {
-      setLoginError("Invalid username or password!");
+      setLoginError("Invalid username or password! (Use: masumhub / masumhub)");
     }
   };
 
@@ -86,14 +86,17 @@ export default function Dashboard() {
   };
 
   const handleUpdateLink = async (code) => {
-    const res = await fetch("/api/create", {
+    const res = await fetch("/api/edit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, desktopUrl: editDesktop, mobileUrl: editMobile }),
     });
-    if ((await res.json()).success) {
+    const data = await res.json();
+    if (data.success) {
       setEditingCode(null);
       fetchStatsAndLinks();
+    } else {
+      alert("Failed to update link");
     }
   };
 
@@ -110,12 +113,15 @@ export default function Dashboard() {
   if (!isLoggedIn) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0f172a", fontFamily: "'Inter', sans-serif" }}>
-        <form onSubmit={handleLogin} style={{ padding: "40px", background: "#1e293b", borderRadius: "16px", width: "350px", border: "1px solid #334155" }}>
-          <h2 style={{ color: "#fff", marginBottom: "20px" }}>Admin Login</h2>
-          <input type="text" placeholder="Username" onChange={(e) => setUsername(e.target.value)} style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "15px", boxSizing: "border-box" }} />
-          <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "20px", boxSizing: "border-box" }} />
-          <button type="submit" style={{ width: "100%", padding: "12px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Login</button>
-          {loginError && <p style={{ color: "#ef4444", marginTop: "10px", fontSize: "13px" }}>{loginError}</p>}
+        <form onSubmit={handleLogin} style={{ padding: "40px", background: "#1e293b", borderRadius: "16px", width: "380px", border: "1px solid #334155" }}>
+          <div style={{ textAlign: "center", marginBottom: "25px" }}>
+            <h2 style={{ color: "#fff", fontSize: "24px", fontWeight: "800", margin: "0 0 5px 0" }}>🔗 LinkHub</h2>
+            <p style={{ color: "#94a3b8", fontSize: "13px", margin: 0 }}>Smart URL Shortener & Device Redirector</p>
+          </div>
+          <input type="text" placeholder="Username (masumhub)" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "15px", boxSizing: "border-box" }} />
+          <input type="password" placeholder="Password (masumhub)" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: "100%", padding: "12px", background: "#0f172a", border: "1px solid #334155", color: "#fff", borderRadius: "8px", marginBottom: "20px", boxSizing: "border-box" }} />
+          <button type="submit" style={{ width: "100%", padding: "12px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Login to LinkHub</button>
+          {loginError && <p style={{ color: "#ef4444", marginTop: "12px", fontSize: "13px", textAlign: "center" }}>{loginError}</p>}
         </form>
       </div>
     );
@@ -125,7 +131,7 @@ export default function Dashboard() {
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", backgroundColor: "#0f172a", color: "#f8fafc" }}>
       {/* Sidebar */}
       <div style={{ width: "260px", background: "#1e293b", borderRight: "1px solid #334155", padding: "30px 20px", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
-        <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#f8fafc", margin: "0 0 35px 10px" }}>⚡ LinkHub</h2>
+        <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#f8fafc", margin: "0 0 35px 10px" }}>🔗 LinkHub</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
           {[
             { id: "dashboard", label: "📊 Dashboard" },
@@ -154,7 +160,7 @@ export default function Dashboard() {
               {generatedLink && (
                 <div style={{ marginTop: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
                   <input readOnly value={generatedLink} style={{ flex: 1, padding: "10px", background: "#0f172a", border: "1px solid #334155", color: "#38bdf8", borderRadius: "8px" }} />
-                  <button onClick={() => { navigator.clipboard.writeText(generatedLink); setCopyText("Copied!"); setTimeout(() => setCopyText("Copy Link"), 2000); }} style={{ padding: "10px 20px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}>{copyText}</button>
+                  <button onClick={() => { navigator.clipboard.writeText(generatedLink); setCopyText("Copied!"); setTimeout(() => setCopyText("Copy Link"), 2000); }} style={{ padding: "10px 20px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>{copyText}</button>
                 </div>
               )}
               {message && !generatedLink && <p style={{ marginTop: "15px", color: "#38bdf8" }}>{message}</p>}
