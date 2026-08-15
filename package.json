@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "ioredis": "^5.4.1",
     "next": "latest",
     "react": "latest",
