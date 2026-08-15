@@ -33,7 +33,18 @@ export default function Dashboard() {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
-    if (localStorage.getItem("isLoggedIn") === "true") setIsLoggedIn(true);
+    if (localStorage.getItem("isLoggedIn") === "true") {
+      setIsLoggedIn(true);
+      fetch("/api/user")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.email) {
+            setUsername(data.email);
+          }
+        })
+        .catch(() => {});
+    }
+
     const checkScreen = () => setIsMobile(window.innerWidth <= 768);
     checkScreen();
     window.addEventListener("resize", checkScreen);
@@ -84,6 +95,11 @@ export default function Dashboard() {
         localStorage.setItem("isLoggedIn", "true");
         setLoginError("");
         showToast("Logged in successfully!");
+        fetch("/api/user")
+          .then((res) => res.json())
+          .then((userData) => {
+            if (userData.success && userData.email) setUsername(userData.email);
+          });
       } else {
         setLoginError(data.error || "Invalid email or password!");
       }
