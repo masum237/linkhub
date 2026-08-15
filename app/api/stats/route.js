@@ -1,7 +1,7 @@
 import { kv } from "@vercel/kv";
 import { NextResponse } from "next/server";
 
-export const revalidate = 0; // ডেটা যেন ক্যাশ না ধরে রাখে
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -10,6 +10,6 @@ export async function GET() {
     
     return NextResponse.json({ totalLinks, totalVisitors });
   } catch (error) {
-    return NextResponse.json({ totalLinks: 0, totalVisitors: 0, error: "DB Error" });
+    return NextResponse.json({ totalLinks: 0, totalVisitors: 0 });
   }
 }
