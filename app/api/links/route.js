@@ -1,20 +1,18 @@
 import Redis from "ioredis";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 const redis = new Redis(process.env.REDIS_URL);
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const cookieStore = cookies();
-    const userEmail = cookieStore.get("user_email")?.value;
+    // Next.js 15-এর রুলস অনুযায়ী request থেকে কুকি পড়া
+    const userEmail = request.cookies.get("user_email")?.value;
 
     if (!userEmail) {
       return NextResponse.json({ success: false, error: "Unauthorized", links: [] }, { status: 401 });
     }
 
-    // শুধুমাত্র এই ইউজারের লিস্টে থাকা লিংকগুলোর কোডগুলো আনা
     const rawLinks = await redis.lrange(`links:${userEmail}`, 0, -1);
     const links = [];
 
@@ -23,7 +21,6 @@ export async function GET() {
       const code = parsed.code;
 
       if (code) {
-        // ক্লিকের সংখ্যা এবং সাব-ডাটা ফেচ করা
         const clicks = (await redis.get(`link:clicks:${code}`)) || 0;
 
         const fetchSubData = async (pattern) => {
@@ -51,8 +48,10 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ success: true, links });
+    // নতুন লিংকগুলো যেন সবার ওপরে দেখায় তাই reverse() করে দেওয়া হলো
+    return NextResponse.json({ success: true, links: links.reverse() });
   } catch (error) {
+    console.error("Links Fetch Error:", error);
     return NextResponse.json({ success: false, links: [] }, { status: 500 });
   }
 }
