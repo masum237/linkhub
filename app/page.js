@@ -27,6 +27,9 @@ export default function Dashboard() {
   const [editDesktop, setEditDesktop] = useState("");
   const [editMobile, setEditMobile] = useState("");
 
+  // Single Link Stats Modal State
+  const [selectedLinkStats, setSelectedLinkStats] = useState(null);
+
   useEffect(() => {
     if (localStorage.getItem("isLoggedIn") === "true") setIsLoggedIn(true);
   }, []);
@@ -54,7 +57,6 @@ export default function Dashboard() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // ইউজারনেম এবং পাসওয়ার্ড 'masumhub' সেট করা হয়েছে
     if (username === "masumhub" && password === "masumhub") {
       setIsLoggedIn(true);
       localStorage.setItem("isLoggedIn", "true");
@@ -196,8 +198,9 @@ export default function Dashboard() {
                           <div style={{ fontSize: "13px", color: "#94a3b8" }}>📱 Mobile: {item.mobileUrl}</div>
                           <div style={{ fontSize: "13px", color: "#10b981", marginTop: "6px", fontWeight: "600" }}>🔥 Total Clicks: {item.clicks || 0}</div>
                         </div>
-                        <div style={{ display: "flex", gap: "10px" }}>
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                           <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/r?code=${item.code}`)} style={{ padding: "8px 12px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>Copy</button>
+                          <button onClick={() => setSelectedLinkStats(item)} style={{ padding: "8px 12px", background: "#0ea5e9", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>📊 Stats</button>
                           <button onClick={() => { setEditingCode(item.code); setEditDesktop(item.desktopUrl); setEditMobile(item.mobileUrl); }} style={{ padding: "8px 12px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>Edit</button>
                           <button onClick={() => handleDelete(item.code)} style={{ padding: "8px 12px", background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>Delete</button>
                         </div>
@@ -205,6 +208,18 @@ export default function Dashboard() {
                     )}
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Individual Link Stats Modal */}
+            {selectedLinkStats && (
+              <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
+                <div style={{ background: "#1e293b", padding: "30px", borderRadius: "16px", width: "400px", border: "1px solid #334155" }}>
+                  <h3 style={{ margin: "0 0 15px 0", color: "#f8fafc" }}>📊 Link Statistics</h3>
+                  <p style={{ fontSize: "14px", color: "#cbd5e1", wordBreak: "break-all" }}><b>Short Link:</b> {window.location.origin}/r?code={selectedLinkStats.code}</p>
+                  <p style={{ fontSize: "15px", color: "#10b981", marginTop: "10px" }}><b>Total Clicks:</b> {selectedLinkStats.clicks || 0}</p>
+                  <button onClick={() => setSelectedLinkStats(null)} style={{ marginTop: "20px", width: "100%", padding: "10px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Close</button>
+                </div>
               </div>
             )}
           </div>
