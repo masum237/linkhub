@@ -5,11 +5,13 @@ export async function GET(request, { params }) {
   const subdomain = params.sub;
   const isMobile = request.nextUrl.searchParams.get('isMobile') === 'true';
 
-  // ডাটাবেস থেকে ওই সাবডোমেইনের ডেটা (ডেস্কটপ ও মোবাইল লিংক) নিয়ে আসা
-  const linkData = await kv.get(subdomain);
+  // ডাটাবেস থেকে ডেটা আনা
+  const linkData = await kv.get(`link:${subdomain}`);
 
   if (linkData) {
-    // ডিভাইস অনুযায়ী রিডাইরেক্ট করা
+    // লিংকে ক্লিক পড়লে ভিজিটর কাউন্ট ১ বাড়ানো
+    await kv.incr("total_visitors");
+
     if (isMobile && linkData.mobileUrl) {
       return NextResponse.redirect(linkData.mobileUrl);
     } else if (!isMobile && linkData.desktopUrl) {
@@ -17,6 +19,5 @@ export async function GET(request, { params }) {
     }
   }
 
-  // যদি লিংক না পাওয়া যায়, তাহলে মেইন পেজে বা ড্যাশবোর্ডে পাঠিয়ে দেবে
   return NextResponse.redirect(new URL("/", request.url));
 }
