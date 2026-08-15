@@ -1,6 +1,10 @@
-import { Montserrat } from "next/font/google";
+import { Poppins } from "next/font/google";
 
-const montserrat = Montserrat({ subsets: ["latin"] });
+// Poppins ফন্টের জন্য ওয়েইট (weight) উল্লেখ করে দেওয়া হলো
+const poppins = Poppins({ 
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"]
+});
 
 export const metadata = {
   title: "LinkHub | Smart URL Shortener & Analytics",
@@ -12,7 +16,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={montserrat.className}>
+    <html lang="en" className={poppins.className}>
       <body style={{ margin: 0, padding: 0, backgroundColor: "#f8fafc", color: "#1e293b" }}>
         {children}
       </body>
