@@ -1,8 +1,6 @@
-import Redis from "ioredis";
+import redis from "@/lib/redis";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-
-const redis = new Redis(process.env.REDIS_URL);
 
 export async function POST(request) {
   try {
