@@ -6,7 +6,15 @@ export default function Dashboard() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
-  const [activeTab, setActiveTab] = useState("dashboard");
+  
+  // ট্যাব রিফ্রেশ হলেও যাতে সেভ থাকে (Session Storage)
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("activeTab") || "dashboard";
+    }
+    return "dashboard";
+  });
+
   const [stats, setStats] = useState({ totalLinks: 0, totalVisitors: 0, todayVisitors: 0, countries: {}, devices: {}, platforms: {} });
   const [linksList, setLinksList] = useState([]);
   const [desktopUrl, setDesktopUrl] = useState("");
@@ -28,6 +36,12 @@ export default function Dashboard() {
     if (isLoggedIn) fetchStatsAndLinks();
   }, [isLoggedIn, message]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("activeTab", activeTab);
+    }
+  }, [activeTab]);
+
   const fetchStatsAndLinks = async () => {
     try {
       const resStats = await fetch("/api/stats");
@@ -41,7 +55,7 @@ export default function Dashboard() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (username === "admin" && password === "12345") {
+    if (username === "masumhub" && password === "masumhub") {
       setIsLoggedIn(true);
       localStorage.setItem("isLoggedIn", "true");
       setLoginError("");
@@ -121,7 +135,7 @@ export default function Dashboard() {
             <div key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: "12px 16px", cursor: "pointer", borderRadius: "10px", fontWeight: "600", fontSize: "14px", background: activeTab === t.id ? "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" : "transparent", color: activeTab === t.id ? "#fff" : "#94a3b8" }}>{t.label}</div>
           ))}
         </div>
-        <button onClick={() => { localStorage.clear(); location.reload(); }} style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "10px", cursor: "pointer", fontWeight: "600" }}>🚪 Logout</button>
+        <button onClick={() => { localStorage.clear(); sessionStorage.clear(); location.reload(); }} style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "10px", cursor: "pointer", fontWeight: "600" }}>🚪 Logout</button>
       </div>
 
       {/* Main Content Area */}
