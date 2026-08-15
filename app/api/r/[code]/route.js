@@ -1,5 +1,4 @@
 import Redis from "ioredis";
-import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
   const { code } = params;
@@ -7,24 +6,24 @@ export async function GET(request, { params }) {
   
   try {
     const rawData = await redis.get(`short:${code}`);
-
     if (rawData) {
       const linkData = JSON.parse(rawData);
-      
       const userAgent = request.headers.get("user-agent") || "";
       const isMobile = /mobile|android|iphone|ipad/i.test(userAgent);
-      
       const targetUrl = (isMobile && linkData.mobileUrl) ? linkData.mobileUrl : linkData.desktopUrl;
 
       if (targetUrl) {
         await redis.incr("total_visitors");
-        // Next.js এর নিজস্ব সঠিক রিডাইরেক্ট মেথড
-        return NextResponse.redirect(targetUrl, { status: 302 });
+        
+        // HTML Meta Refresh ব্যবহার করছি, যা রিডাইরেক্টের গ্যারান্টি দেয়
+        return new Response(`<html><head><meta http-equiv="refresh" content="0;url=${targetUrl}"></head></html>`, {
+          headers: { 'Content-Type': 'text/html' },
+        });
       }
     }
   } catch (e) {
-    console.error("Redirect Error:", e);
+    console.error(e);
   }
 
-  return NextResponse.redirect(new URL("/", request.url), { status: 302 });
+  return new Response("Link not found", { status: 404 });
 }
