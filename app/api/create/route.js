@@ -19,10 +19,11 @@ export async function POST(request) {
       return NextResponse.json({ error: "Both URLs are required" }, { status: 400 });
     }
 
-    // সঠিক উপায়ে ৫ অক্ষরের ইউনিক কোড জেনারেট করা
+    // ৫ অক্ষরের ইউনিক কোড জেনারেট করা
     const code = Math.random().toString(36).substring(2, 7);
 
     const linkData = {
+      code,
       desktopUrl,
       mobileUrl,
       desktopTitle: desktopTitle || "",
@@ -35,7 +36,7 @@ export async function POST(request) {
     await redis.incr("total_links");
 
     // ২. শুধুমাত্র বর্তমান ইউজারের নিজস্ব লিস্টে লিংকটি যুক্ত করা
-    await redis.rpush(`links:${userEmail}`, JSON.stringify({ code, ...linkData }));
+    await redis.rpush(`links:${userEmail}`, JSON.stringify(linkData));
 
     return NextResponse.json({ success: true, code });
   } catch (error) {
