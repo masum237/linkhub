@@ -13,22 +13,23 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Email and password are required!" }, { status: 400 });
     }
 
-    // Redis থেকে ইউজারের ডেটা আনা
     const userDataStr = await redis.get(`user:${email}`);
     if (!userDataStr) {
-      return NextResponse.json({ success: false, error: "User not found in database!" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "User not found!" }, { status: 400 });
     }
 
     const userData = JSON.parse(userDataStr);
 
-    // পাসওয়ার্ড ম্যাচ করছে কিনা চেক করা
     const isPasswordValid = await bcrypt.compare(password, userData.password);
     if (!isPasswordValid) {
       return NextResponse.json({ success: false, error: "Invalid password!" }, { status: 400 });
     }
 
-    // কুকি সেট করা
-    cookies().set("user_email", email, {
+    // সঠিক নিয়মে কুকি সেট করার জন্য cookiesStore variable ব্যবহার করা হলো
+    const cookieStore = cookies();
+    cookieStore.set({
+      name: "user_email",
+      value: email,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 7,
@@ -37,7 +38,6 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, message: "Login successful" });
   } catch (error) {
-    // টার্মিনাল বা কনসোলে আসল এররটি প্রিন্ট করার জন্য
     console.error("Login Server Error:", error.message);
     return NextResponse.json({ success: false, error: "Server Error: " + error.message }, { status: 500 });
   }
