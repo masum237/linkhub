@@ -1,4 +1,4 @@
-import redis from "@/lib/redis";
+import redis from "../../../lib/redis"; // অথবা সরাসরি relative path ঠিক করে নিন
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -17,7 +17,6 @@ export async function POST(request) {
       return NextResponse.json({ error: "Both URLs are required" }, { status: 400 });
     }
 
-    // ৫ অক্ষরের ইউনিক কোড জেনারেট করা
     const code = Math.random().toString(36).substring(2, 7);
 
     const linkData = {
@@ -29,11 +28,8 @@ export async function POST(request) {
       createdAt: new Date().toISOString(),
     };
 
-    // ১. গ্লোবাল ডাটাবেসে শর্ট কোড ও মোট লিংকের হিসাব সেভ করা
     await redis.set(`short:${code}`, JSON.stringify(linkData));
     await redis.incr("total_links");
-
-    // ২. শুধুমাত্র বর্তমান ইউজারের নিজস্ব লিস্টে লিংকটি যুক্ত করা
     await redis.rpush(`links:${userEmail}`, JSON.stringify(linkData));
 
     return NextResponse.json({ success: true, code });
