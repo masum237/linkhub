@@ -16,6 +16,14 @@ export default function Dashboard() {
   const [mobileUrl, setMobileUrl] = useState("");
   const [message, setMessage] = useState("");
 
+  // পেজ লোড হওয়ার সাথে সাথে চেক করবে আগে লগইন করা ছিল কিনা
+  useEffect(() => {
+    const savedLogin = localStorage.getItem("isLoggedIn");
+    if (savedLogin === "true") {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (isLoggedIn) {
       fetchStatsAndLinks();
@@ -42,10 +50,16 @@ export default function Dashboard() {
     e.preventDefault();
     if (username === "admin" && password === "12345") {
       setIsLoggedIn(true);
+      localStorage.setItem("isLoggedIn", "true"); // ব্রাউজারে সেভ করে রাখা
       setLoginError("");
     } else {
       setLoginError("Invalid username or password!");
     }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem("isLoggedIn"); // লগআউট করলে ক্লিয়ার হয়ে যাবে
   };
 
   const handleCreateLink = async (e) => {
@@ -147,7 +161,7 @@ export default function Dashboard() {
           <MenuItem label="🌐 Domain Settings" tabName="domains" />
         </ul>
 
-        <button onClick={() => setIsLoggedIn(false)} style={{ padding: "12px", backgroundColor: "#fff5f5", color: "#e53e3e", border: "1px solid #fed7d7", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px", width: "100%" }}>
+        <button onClick={handleLogout} style={{ padding: "12px", backgroundColor: "#fff5f5", color: "#e53e3e", border: "1px solid #fed7d7", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px", width: "100%" }}>
           🚪 Logout
         </button>
       </div>
@@ -155,7 +169,6 @@ export default function Dashboard() {
       {/* Main Content */}
       <div style={{ flex: 1, padding: "40px", boxSizing: "border-box", maxWidth: "1200px" }}>
         
-        {/* Tab 1: Dashboard */}
         {activeTab === "dashboard" && (
           <>
             <div style={{ marginBottom: "30px" }}>
@@ -210,7 +223,6 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* Tab 2: Short Links List */}
         {activeTab === "links" && (
           <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
             <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#2d3748", margin: "0 0 20px 0" }}>🔗 All Created Short Links</h2>
@@ -233,7 +245,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Tab 3: Statistics */}
         {activeTab === "stats" && (
           <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
             <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#2d3748", margin: "0 0 20px 0" }}>📈 Live Statistics</h2>
@@ -242,7 +253,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Tab 4: Domain Settings */}
         {activeTab === "domains" && (
           <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
             <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#2d3748", margin: "0 0 15px 0" }}>🌐 Domain Settings</h2>
