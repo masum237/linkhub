@@ -1,7 +1,7 @@
 import Redis from "ioredis";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers"; // কুকি ব্যবহারের জন্য এটি জরুরি
+import { cookies } from "next/headers";
 
 const redis = new Redis(process.env.REDIS_URL);
 
@@ -9,10 +9,14 @@ export async function POST(request) {
   try {
     const { email, password } = await request.json();
 
-    // Redis থেকে ইউজারের ডেটা খোঁজা
+    if (!email || !password) {
+      return NextResponse.json({ success: false, error: "Email and password are required!" }, { status: 400 });
+    }
+
+    // Redis থেকে ইউজারের ডেটা আনা
     const userDataStr = await redis.get(`user:${email}`);
     if (!userDataStr) {
-      return NextResponse.json({ success: false, error: "User not found!" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "User not found in database!" }, { status: 400 });
     }
 
     const userData = JSON.parse(userDataStr);
@@ -23,17 +27,18 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Invalid password!" }, { status: 400 });
     }
 
-    // 🔥 সবচেয়ে গুরুত্বপূর্ণ অংশ: লগইন সফল হলে কুকিতে ইউজারের ইমেইল সেট করে দেওয়া
+    // কুকি সেট করা
     cookies().set("user_email", email, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7, // ১ সপ্তাহ পর্যন্ত লগইন থাকবে
+      maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
 
-    // সফল হলে রেসপন্স পাঠানো
     return NextResponse.json({ success: true, message: "Login successful" });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
+    // টার্মিনাল বা কনসোলে আসল এররটি প্রিন্ট করার জন্য
+    console.error("Login Server Error:", error.message);
+    return NextResponse.json({ success: false, error: "Server Error: " + error.message }, { status: 500 });
   }
 }
