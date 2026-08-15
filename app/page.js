@@ -14,14 +14,12 @@ export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(null);
   
-  // Create Link Form States (Desktop, Mobile & Separate Preview Titles)
   const [desktopUrl, setDesktopUrl] = useState("");
   const [mobileUrl, setMobileUrl] = useState("");
   const [desktopTitle, setDesktopTitle] = useState("");
   const [mobileTitle, setMobileTitle] = useState("");
   const [message, setMessage] = useState("");
 
-  // Edit Link States
   const [editingLink, setEditingLink] = useState(null);
   const [editDesktop, setEditDesktop] = useState("");
   const [editMobile, setEditMobile] = useState("");
@@ -40,7 +38,6 @@ export default function Dashboard() {
     checkScreen();
     window.addEventListener("resize", checkScreen);
     
-    // Global click listener to close three-dot menu when clicking anywhere outside
     const handleGlobalClick = (e) => {
       if (!e.target.closest(".menu-container")) {
         setOpenMenuCode(null);
@@ -91,12 +88,7 @@ export default function Dashboard() {
     const res = await fetch("/api/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        desktopUrl, 
-        mobileUrl, 
-        desktopTitle, 
-        mobileTitle 
-      }),
+      body: JSON.stringify({ desktopUrl, mobileUrl, desktopTitle, mobileTitle }),
     });
     const data = await res.json();
     if (data.success) {
@@ -118,13 +110,7 @@ export default function Dashboard() {
     const res = await fetch("/api/edit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        code, 
-        desktopUrl: editDesktop, 
-        mobileUrl: editMobile, 
-        desktopTitle: editDesktopTitle, 
-        mobileTitle: editMobileTitle 
-      }),
+      body: JSON.stringify({ code, desktopUrl: editDesktop, mobileUrl: editMobile, desktopTitle: editDesktopTitle, mobileTitle: editMobileTitle }),
     });
     const data = await res.json();
     if (data.success) {
@@ -402,7 +388,7 @@ export default function Dashboard() {
 
       </div>
 
-      {/* Create Link Modal with Separate Preview Titles */}
+      {/* Create Link Modal */}
       {showCreateModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
           <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "450px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", maxHeight: "90vh", overflowY: "auto" }}>
