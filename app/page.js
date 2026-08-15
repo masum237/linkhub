@@ -7,15 +7,14 @@ export default function Dashboard() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  const [activeTab, setActiveTab] = useState("dashboard"); // Tab system
-  const [stats, setStats] = useState({ totalLinks: 0, totalVisitors: 0 }); // Live stats
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [stats, setStats] = useState({ totalLinks: 0, totalVisitors: 0 });
 
   const [subdomain, setSubdomain] = useState("");
   const [desktopUrl, setDesktopUrl] = useState("");
   const [mobileUrl, setMobileUrl] = useState("");
   const [message, setMessage] = useState("");
 
-  // লগইন করার পর স্ট্যাটস লোড হবে
   useEffect(() => {
     if (isLoggedIn) {
       fetch("/api/stats")
@@ -23,7 +22,7 @@ export default function Dashboard() {
         .then((data) => setStats(data))
         .catch(() => console.log("Failed to load stats"));
     }
-  }, [isLoggedIn, message]); // নতুন লিংক বানালে স্ট্যাটস আপডেট হবে
+  }, [isLoggedIn, message]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -31,13 +30,13 @@ export default function Dashboard() {
       setIsLoggedIn(true);
       setLoginError("");
     } else {
-      setLoginError("Invalid Login!");
+      setLoginError("Invalid username or password!");
     }
   };
 
   const handleCreateLink = async (e) => {
     e.preventDefault();
-    setMessage("Creating...");
+    setMessage("Creating short link...");
 
     const res = await fetch("/api/create", {
       method: "POST",
@@ -47,43 +46,56 @@ export default function Dashboard() {
     
     const data = await res.json();
     if (data.success) {
-      setMessage(`Success! Link created: ${subdomain}.yourdomain.com`);
+      setMessage(`🎉 Success! Your short link: ${subdomain}.yourdomain.com`);
       setSubdomain("");
       setDesktopUrl("");
       setMobileUrl("");
     } else {
-      setMessage(`Error: ${data.error}`);
+      setMessage(`❌ Error: ${data.error}`);
     }
   };
 
+  // Login Page UI
   if (!isLoggedIn) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#f8f9fa", fontFamily: "sans-serif" }}>
-        <div style={{ backgroundColor: "#fff", padding: "40px", borderRadius: "8px", boxShadow: "0 4px 10px rgba(0,0,0,0.1)", width: "100%", maxWidth: "400px" }}>
-          <h2 style={{ textAlign: "center", marginBottom: "20px", color: "#007bff" }}>🚀 QuickURL Login</h2>
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ padding: "10px", border: "1px solid #ccc", borderRadius: "4px" }} />
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ padding: "10px", border: "1px solid #ccc", borderRadius: "4px" }} />
-            <button type="submit" style={{ padding: "12px", backgroundColor: "#007bff", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>Login</button>
-            {loginError && <p style={{ color: "red", textAlign: "center", margin: 0 }}>{loginError}</p>}
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ background: "#ffffff", padding: "40px", borderRadius: "16px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", width: "100%", maxWidth: "420px" }}>
+          <div style={{ textAlign: "center", marginBottom: "30px" }}>
+            <h2 style={{ color: "#333", fontSize: "28px", fontWeight: "700", margin: "0 0 8px 0" }}>⚡ QuickURL</h2>
+            <p style={{ color: "#666", fontSize: "14px", margin: 0 }}>Sign in to manage your smart links</p>
+          </div>
+          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#444", marginBottom: "6px" }}>Username</label>
+              <input type="text" placeholder="Enter username (admin)" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#444", marginBottom: "6px" }}>Password</label>
+              <input type="password" placeholder="Enter password (12345)" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <button type="submit" style={{ padding: "13px", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "#fff", border: "none", borderRadius: "8px", fontSize: "15px", fontWeight: "600", cursor: "pointer", marginTop: "10px", boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)" }}>Login to Dashboard</button>
+            {loginError && <p style={{ color: "#e53e3e", textAlign: "center", fontSize: "13px", fontWeight: "500", margin: "5px 0 0 0" }}>{loginError}</p>}
           </form>
         </div>
       </div>
     );
   }
 
-  // Sidebar Menu Item Component
   const MenuItem = ({ label, tabName }) => (
     <li 
       onClick={() => setActiveTab(tabName)}
       style={{ 
-        fontWeight: activeTab === tabName ? "bold" : "normal", 
-        color: activeTab === tabName ? "#333" : "#666", 
-        backgroundColor: activeTab === tabName ? "#e9ecef" : "transparent", 
-        padding: "8px 12px", 
-        borderRadius: "5px",
+        fontWeight: activeTab === tabName ? "600" : "500", 
+        color: activeTab === tabName ? "#667eea" : "#4a5568", 
+        backgroundColor: activeTab === tabName ? "#ebf4ff" : "transparent", 
+        padding: "12px 16px", 
+        borderRadius: "8px",
         cursor: "pointer",
-        marginBottom: "5px"
+        marginBottom: "8px",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        transition: "all 0.2s ease"
       }}
     >
       {label}
@@ -91,64 +103,92 @@ export default function Dashboard() {
   );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "sans-serif", backgroundColor: "#f8f9fa" }}>
+    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", backgroundColor: "#f7fafc" }}>
       
       {/* Sidebar */}
-      <div style={{ width: "250px", backgroundColor: "#fff", padding: "20px", borderRight: "1px solid #ddd", display: "flex", flexDirection: "column" }}>
-        <h2 style={{ color: "#007bff", marginBottom: "30px" }}>🚀 QuickURL</h2>
-        <ul style={{ listStyle: "none", padding: 0, flex: 1 }}>
+      <div style={{ width: "260px", backgroundColor: "#ffffff", padding: "24px 16px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 10px", marginBottom: "35px" }}>
+          <h2 style={{ color: "#2d3748", fontSize: "22px", fontWeight: "800", margin: 0 }}>⚡ QuickURL</h2>
+        </div>
+        
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, flex: 1 }}>
           <MenuItem label="📊 Dashboard" tabName="dashboard" />
           <MenuItem label="🔗 Short Links" tabName="links" />
           <MenuItem label="📈 Statistics" tabName="stats" />
           <MenuItem label="🌐 Domain Settings" tabName="domains" />
         </ul>
-        <button onClick={() => setIsLoggedIn(false)} style={{ padding: "10px", backgroundColor: "#dc3545", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>Logout</button>
+
+        <button onClick={() => setIsLoggedIn(false)} style={{ padding: "12px", backgroundColor: "#fff5f5", color: "#e53e3e", border: "1px solid #fed7d7", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "14px", width: "100%", transition: "background 0.2s" }}>
+          🚪 Logout
+        </button>
       </div>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, padding: "40px" }}>
+      {/* Main Content Area */}
+      <div style={{ flex: 1, padding: "40px", boxSizing: "border-box", maxWidth: "1200px" }}>
         
         {activeTab === "dashboard" && (
           <>
-            <h1 style={{ fontSize: "24px", marginBottom: "20px" }}>Dashboard Overview</h1>
+            <div style={{ marginBottom: "30px" }}>
+              <h1 style={{ fontSize: "26px", fontWeight: "700", color: "#1a202c", margin: "0 0 6px 0" }}>Dashboard Overview</h1>
+              <p style={{ color: "#718096", fontSize: "14px", margin: 0 }}>Monitor your smart link analytics and generate new redirects instantly.</p>
+            </div>
             
-            {/* Live Stats Cards */}
-            <div style={{ display: "flex", gap: "20px", marginBottom: "40px" }}>
-              <div style={{ padding: "20px", backgroundColor: "#fff", borderRadius: "8px", boxShadow: "0 2px 5px rgba(0,0,0,0.05)", flex: 1 }}>
-                <p style={{ color: "#666", margin: 0, fontSize: "14px", fontWeight: "bold" }}>TOTAL LINKS</p>
-                <h2 style={{ margin: "5px 0 0 0", color: "#007bff" }}>{stats.totalLinks}</h2>
+            {/* Stats Cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px", marginBottom: "35px" }}>
+              <div style={{ padding: "24px", backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
+                <p style={{ color: "#718096", margin: "0 0 8px 0", fontSize: "13px", fontWeight: "700", letterSpacing: "0.5px" }}>TOTAL LINKS</p>
+                <h2 style={{ margin: 0, color: "#2b6cb0", fontSize: "32px", fontWeight: "800" }}>{stats.totalLinks}</h2>
               </div>
-              <div style={{ padding: "20px", backgroundColor: "#fff", borderRadius: "8px", boxShadow: "0 2px 5px rgba(0,0,0,0.05)", flex: 1 }}>
-                <p style={{ color: "#666", margin: 0, fontSize: "14px", fontWeight: "bold" }}>TOTAL VISITORS</p>
-                <h2 style={{ margin: "5px 0 0 0", color: "#28a745" }}>{stats.totalVisitors}</h2>
+              <div style={{ padding: "24px", backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
+                <p style={{ color: "#718096", margin: "0 0 8px 0", fontSize: "13px", fontWeight: "700", letterSpacing: "0.5px" }}>TOTAL VISITORS</p>
+                <h2 style={{ margin: 0, color: "#38a169", fontSize: "32px", fontWeight: "800" }}>{stats.totalVisitors}</h2>
               </div>
             </div>
 
-            {/* Create Link Form */}
-            <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "8px", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}>
-              <h2 style={{ fontSize: "18px", marginBottom: "20px" }}>Create Advanced Short Link</h2>
-              <form onSubmit={handleCreateLink} style={{ display: "flex", flexDirection: "column", gap: "15px", maxWidth: "500px" }}>
+            {/* Create Link Card */}
+            <div style={{ backgroundColor: "#ffffff", padding: "35px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0", maxWidth: "700px" }}>
+              <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#2d3748", margin: "0 0 20px 0" }}>Create Advanced Short Link</h3>
+              
+              <form onSubmit={handleCreateLink} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", fontSize:"14px" }}>Subdomain Prefix</label>
+                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "13px", color: "#4a5568" }}>Subdomain Prefix</label>
                   <div style={{ display: "flex", alignItems: "center" }}>
-                    <input type="text" value={subdomain} onChange={(e) => setSubdomain(e.target.value.toLowerCase())} placeholder="e.g. iphone17" required style={{ flex: 1, padding: "10px", border: "1px solid #ccc", borderRadius: "4px 0 0 4px", outline: "none" }} />
-                    <span style={{ padding: "10px", backgroundColor: "#e9ecef", border: "1px solid #ccc", borderLeft: "none", borderRadius: "0 4px 4px 0" }}>.yourdomain.com</span>
+                    <input type="text" value={subdomain} onChange={(e) => setSubdomain(e.target.value.toLowerCase())} placeholder="e.g. fashion" required style={{ flex: 1, padding: "12px 14px", border: "1px solid #cbd5e0", borderRight: "none", borderRadius: "8px 0 0 8px", outline: "none", fontSize: "14px" }} />
+                    <span style={{ padding: "12px 16px", backgroundColor: "#edf2f7", border: "1px solid #cbd5e0", borderRadius: "0 8px 8px 0", color: "#4a5568", fontSize: "14px", fontWeight: "500" }}>.yourdomain.com</span>
                   </div>
                 </div>
-                <input type="url" value={desktopUrl} onChange={(e) => setDesktopUrl(e.target.value)} placeholder="Desktop Destination URL" required style={{ padding: "10px", border: "1px solid #ccc", borderRadius: "4px" }} />
-                <input type="url" value={mobileUrl} onChange={(e) => setMobileUrl(e.target.value)} placeholder="Mobile Destination URL" required style={{ padding: "10px", border: "1px solid #ccc", borderRadius: "4px" }} />
-                <button type="submit" style={{ padding: "12px", backgroundColor: "#20c997", color: "#fff", border: "none", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", marginTop: "10px" }}>+ Create Link</button>
-                {message && <p style={{ marginTop: "15px", color: message.includes("Error") ? "red" : "green", fontWeight: "bold" }}>{message}</p>}
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "13px", color: "#4a5568" }}>Desktop Destination URL</label>
+                  <input type="url" value={desktopUrl} onChange={(e) => setDesktopUrl(e.target.value)} placeholder="https://example.com/desktop-page" required style={{ width: "100%", padding: "12px 14px", border: "1px solid #cbd5e0", borderRadius: "8px", outline: "none", fontSize: "14px", boxSizing: "border-box" }} />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", fontSize: "13px", color: "#4a5568" }}>Mobile Destination URL</label>
+                  <input type="url" value={mobileUrl} onChange={(e) => setMobileUrl(e.target.value)} placeholder="https://example.com/mobile-page" required style={{ width: "100%", padding: "12px 14px", border: "1px solid #cbd5e0", borderRadius: "8px", outline: "none", fontSize: "14px", boxSizing: "border-box" }} />
+                </div>
+
+                <button type="submit" style={{ padding: "14px", backgroundColor: "#319795", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "15px", cursor: "pointer", boxShadow: "0 4px 12px rgba(49, 151, 149, 0.3)", transition: "background 0.2s" }}>
+                  ✨ Generate Short Link
+                </button>
+
+                {message && (
+                  <div style={{ padding: "12px 16px", borderRadius: "8px", backgroundColor: message.includes("Error") ? "#fff5f5" : "#f0fff4", border: `1px solid ${message.includes("Error") ? "#feb2b2" : "#c6f6d5"}`, color: message.includes("Error") ? "#c53030" : "#22543d", fontSize: "14px", fontWeight: "500", wordBreak: "break-all" }}>
+                    {message}
+                  </div>
+                )}
               </form>
             </div>
           </>
         )}
 
-        {/* Other Tabs content (Placeholder) */}
+        {/* Other Tabs */}
         {activeTab !== "dashboard" && (
-          <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "8px", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}>
-            <h2>{activeTab === "links" ? "Short Links List" : activeTab === "stats" ? "Detailed Statistics" : "Domain Settings"}</h2>
-            <p style={{ color: "#666" }}>This section will display data for {activeTab}. (You can add tables here later!)</p>
+          <div style={{ backgroundColor: "#ffffff", padding: "40px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+            <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#2d3748", margin: "0 0 10px 0" }}>
+              {activeTab === "links" ? "🔗 All Short Links" : activeTab === "stats" ? "📈 Detailed Statistics" : "🌐 Domain Settings"}
+            </h2>
+            <p style={{ color: "#718096", fontSize: "14px", margin: 0 }}>This section is currently active and ready for custom features.</p>
           </div>
         )}
 
