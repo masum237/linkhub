@@ -30,13 +30,11 @@ export default function Dashboard() {
   const [openMenuCode, setOpenMenuCode] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (localStorage.getItem("isLoggedIn") === "true") setIsLoggedIn(true);
-    
-    const checkScreen = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
+    const checkScreen = () => setIsMobile(window.innerWidth <= 768);
     checkScreen();
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
@@ -63,12 +61,18 @@ export default function Dashboard() {
     } catch (error) { console.log("Failed to fetch data"); }
   };
 
+  const showToast = (msg, type = "success") => {
+    setToast({ message: msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
     if (username === "masumhub" && password === "masumhub") {
       setIsLoggedIn(true);
       localStorage.setItem("isLoggedIn", "true");
       setLoginError("");
+      showToast("Logged in successfully!");
     } else {
       setLoginError("Invalid username or password!");
     }
@@ -84,13 +88,15 @@ export default function Dashboard() {
     });
     const data = await res.json();
     if (data.success) {
-      setMessage("Success!");
       setDesktopUrl("");
       setMobileUrl("");
       setShowCreateModal(false);
+      setMessage("");
+      showToast("Link created successfully!");
       fetchStatsAndLinks();
     } else {
-      setMessage(`Error: ${data.error}`);
+      setMessage("");
+      showToast(`Error: ${data.error}`, "error");
     }
   };
 
@@ -103,20 +109,32 @@ export default function Dashboard() {
     const data = await res.json();
     if (data.success) {
       setEditingLink(null);
+      showToast("Link updated successfully!");
       fetchStatsAndLinks();
     } else {
-      alert("Failed to update");
+      showToast("Failed to update link", "error");
     }
   };
 
   const handleDelete = async (code) => {
     if (!confirm("Are you sure you want to delete this link?")) return;
-    await fetch("/api/delete", {
+    const res = await fetch("/api/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),
     });
-    fetchStatsAndLinks();
+    const data = await res.json();
+    if (data.success) {
+      showToast("Link deleted successfully!");
+      fetchStatsAndLinks();
+    } else {
+      showToast("Failed to delete link", "error");
+    }
+  };
+
+  const handleCopy = (code) => {
+    navigator.clipboard.writeText(`${window.location.origin}/r?code=${code}`);
+    showToast("Link copied to clipboard!");
   };
 
   const Icon = ({ name, size = 18, color = "currentColor" }) => {
@@ -191,9 +209,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", backgroundColor: "#f8fafc", color: "#1e293b", position: "relative" }}>
+    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", backgroundColor: "#f8fafc", color: "#1e293b", position: "relative", overflowX: "hidden" }}>
       
-      {/* Mobile Top Header */}
       {isMobile && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "#ffffff", padding: "15px 20px", borderBottom: "1px solid #e2e8f0", position: "fixed", top: 0, zIndex: 100, boxSizing: "border-box" }}>
           <h2 style={{ fontSize: "18px", fontWeight: "800", color: "#0d9488", margin: 0 }}>🔗 LinkHub</h2>
@@ -203,7 +220,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Sidebar */}
       <div style={{ 
         width: "260px", 
         background: "#ffffff", 
@@ -249,10 +265,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div style={{ flex: 1, padding: "40px 20px", boxSizing: "border-box", overflowY: "auto", width: "100%", marginTop: isMobile ? "60px" : "0" }}>
         
-        {/* Dashboard Tab */}
         {activeTab === "dashboard" && (
           <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "15px", marginBottom: "25px" }}>
@@ -282,20 +296,22 @@ export default function Dashboard() {
               <button onClick={() => setShowCreateModal(true)} style={{ padding: "10px 18px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>+ Create link</button>
             </div>
 
-            <div style={{ background: "#ffffff", borderRadius: "14px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
-              <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", fontWeight: "600", fontSize: "13px", color: "#64748b", minWidth: "300px" }}>Link</div>
+            <div style={{ background: "#ffffff", borderRadius: "14px", border: "1px solid #e2e8f0" }}>
+              <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", fontWeight: "600", fontSize: "13px", color: "#64748b" }}>Link</div>
               {linksList.length === 0 ? (
                 <div style={{ padding: "30px", textAlign: "center", color: "#64748b", fontSize: "13px" }}>No links created yet.</div>
               ) : (
                 linksList.slice(0, 5).map(item => (
-                  <div key={item.code} style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", minWidth: "300px" }}>
-                    <div style={{ wordBreak: "break-all", flex: 1 }}>
+                  <div key={item.code} style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                    <div style={{ wordBreak: "break-all", flex: 1, minWidth: "200px" }}>
                       <a href={`/r?code=${item.code}`} target="_blank" style={{ color: "#0d9488", fontWeight: "700", fontSize: "14px", textDecoration: "none" }}>{window.location.origin}/r?code={item.code}</a>
                       <div style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>💻 {item.desktopUrl}</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                      <span style={{ background: "#f1f5f9", padding: "5px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#334155" }}>🔥 {item.clicks || 0}</span>
-                      <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/r?code=${item.code}`)} title="Copy Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="copy" size={15} color="#475569" /></button>
+                      <span style={{ background: "#f1f5f9", padding: "5px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#334155", display: "flex", alignItems: "center", gap: "5px" }}>
+                        <Icon name="stats" size={13} color="#64748b" /> {item.clicks || 0} Clicks
+                      </span>
+                      <button onClick={() => handleCopy(item.code)} title="Copy Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="copy" size={15} color="#475569" /></button>
                       <button onClick={() => handleDelete(item.code)} title="Delete Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="trash" size={15} color="#ef4444" /></button>
                     </div>
                   </div>
@@ -305,7 +321,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Short Links Tab */}
         {activeTab === "links" && (
           <div style={{ maxWidth: "900px", margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
@@ -316,29 +331,31 @@ export default function Dashboard() {
               <button onClick={() => setShowCreateModal(true)} style={{ padding: "10px 16px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>+ New Link</button>
             </div>
 
-            <div style={{ background: "#ffffff", borderRadius: "14px", border: "1px solid #e2e8f0", overflowX: "auto" }}>
-              <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", fontWeight: "600", fontSize: "13px", color: "#64748b", minWidth: "350px" }}>All Links Directory</div>
+            <div style={{ background: "#ffffff", borderRadius: "14px", border: "1px solid #e2e8f0", paddingBottom: "10px" }}>
+              <div style={{ padding: "12px 16px", borderBottom: "1px solid #e2e8f0", fontWeight: "600", fontSize: "13px", color: "#64748b" }}>All Links Directory</div>
               {linksList.length === 0 ? (
                 <div style={{ padding: "30px", textAlign: "center", color: "#64748b", fontSize: "13px" }}>No short links found.</div>
               ) : (
                 linksList.map(item => (
-                  <div key={item.code} style={{ padding: "16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "15px", minWidth: "350px" }}>
-                    <div style={{ wordBreak: "break-all", flex: 1 }}>
+                  <div key={item.code} style={{ padding: "16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "15px" }}>
+                    <div style={{ wordBreak: "break-all", flex: 1, minWidth: "200px" }}>
                       <a href={`/r?code=${item.code}`} target="_blank" style={{ color: "#0d9488", fontWeight: "700", fontSize: "15px", textDecoration: "none" }}>{window.location.origin}/r?code={item.code}</a>
                       <div style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>💻 Desktop: {item.desktopUrl}</div>
                       <div style={{ fontSize: "11px", color: "#64748b" }}>📱 Mobile: {item.mobileUrl}</div>
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-                      <span style={{ background: "#f1f5f9", padding: "5px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#334155" }}>🔥 {item.clicks || 0}</span>
-                      <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/r?code=${item.code}`)} title="Copy" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="copy" size={15} color="#475569" /></button>
+                      <span style={{ background: "#f1f5f9", padding: "5px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", color: "#334155", display: "flex", alignItems: "center", gap: "5px" }}>
+                        <Icon name="stats" size={13} color="#64748b" /> {item.clicks || 0} Clicks
+                      </span>
+                      <button onClick={() => handleCopy(item.code)} title="Copy" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="copy" size={15} color="#475569" /></button>
                       <button onClick={() => handleDelete(item.code)} title="Delete" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="trash" size={15} color="#ef4444" /></button>
 
                       <div style={{ position: "relative" }}>
                         <button onClick={() => setOpenMenuCode(openMenuCode === item.code ? null : item.code)} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>⋮</button>
                         
                         {openMenuCode === item.code && (
-                          <div style={{ position: "absolute", right: 0, top: "35px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 10, width: "130px", overflow: "hidden" }}>
+                          <div style={{ position: "absolute", right: 0, top: "35px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 4px 15px rgba(0,0,0,0.15)", zIndex: 100, width: "130px", overflow: "hidden" }}>
                             <button onClick={() => { setEditingLink(item); setEditDesktop(item.desktopUrl); setEditMobile(item.mobileUrl); setOpenMenuCode(null); }} style={{ width: "100%", padding: "10px", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "#1e293b", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "8px" }}><Icon name="edit" size={14} /> Edit</button>
                             <button onClick={() => { setSelectedLinkStats(item); setOpenMenuCode(null); }} style={{ width: "100%", padding: "10px", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}><Icon name="stats" size={14} /> Statistics</button>
                           </div>
@@ -352,7 +369,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Statistics Tab */}
         {activeTab === "stats" && (
           <div style={{ maxWidth: "850px", margin: "0 auto" }}>
             <h2 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "20px", color: "#0f172a" }}>📈 Live System Analytics</h2>
@@ -396,7 +412,6 @@ export default function Dashboard() {
 
       </div>
 
-      {/* Create Link Modal */}
       {showCreateModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
           <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "420px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}>
@@ -420,7 +435,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Edit Modal */}
       {editingLink && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
           <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "420px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}>
@@ -443,7 +457,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Statistics Modal */}
       {selectedLinkStats && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
           <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "420px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", maxHeight: "85vh", overflowY: "auto" }}>
@@ -471,6 +484,18 @@ export default function Dashboard() {
 
             <button onClick={() => setSelectedLinkStats(null)} style={{ width: "100%", padding: "10px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Close</button>
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: "20px", right: "20px", zIndex: 9999,
+          background: toast.type === "error" ? "#ef4444" : "#10b981",
+          color: "#fff", padding: "12px 24px", borderRadius: "8px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)", fontSize: "14px", fontWeight: "600",
+          display: "flex", alignItems: "center", gap: "8px"
+        }}>
+          {toast.type === "error" ? "❌" : "✅"} {toast.message}
         </div>
       )}
 
