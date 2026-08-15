@@ -13,12 +13,21 @@ export default function Dashboard() {
   
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(null);
+  
+  // Create Link Form States (Desktop, Mobile & Separate Preview Titles)
   const [desktopUrl, setDesktopUrl] = useState("");
   const [mobileUrl, setMobileUrl] = useState("");
+  const [desktopTitle, setDesktopTitle] = useState("");
+  const [mobileTitle, setMobileTitle] = useState("");
   const [message, setMessage] = useState("");
+
+  // Edit Link States
   const [editingLink, setEditingLink] = useState(null);
   const [editDesktop, setEditDesktop] = useState("");
   const [editMobile, setEditMobile] = useState("");
+  const [editDesktopTitle, setEditDesktopTitle] = useState("");
+  const [editMobileTitle, setEditMobileTitle] = useState("");
+
   const [selectedLinkStats, setSelectedLinkStats] = useState(null);
   const [openMenuCode, setOpenMenuCode] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,7 +40,7 @@ export default function Dashboard() {
     checkScreen();
     window.addEventListener("resize", checkScreen);
     
-    // Global click to close active menu smoothly
+    // Global click listener to close three-dot menu when clicking anywhere outside
     const handleGlobalClick = (e) => {
       if (!e.target.closest(".menu-container")) {
         setOpenMenuCode(null);
@@ -82,12 +91,19 @@ export default function Dashboard() {
     const res = await fetch("/api/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ desktopUrl, mobileUrl }),
+      body: JSON.stringify({ 
+        desktopUrl, 
+        mobileUrl, 
+        desktopTitle, 
+        mobileTitle 
+      }),
     });
     const data = await res.json();
     if (data.success) {
       setDesktopUrl("");
       setMobileUrl("");
+      setDesktopTitle("");
+      setMobileTitle("");
       setShowCreateModal(false);
       setMessage("");
       showToast("Link created successfully!");
@@ -102,7 +118,13 @@ export default function Dashboard() {
     const res = await fetch("/api/edit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, desktopUrl: editDesktop, mobileUrl: editMobile }),
+      body: JSON.stringify({ 
+        code, 
+        desktopUrl: editDesktop, 
+        mobileUrl: editMobile, 
+        desktopTitle: editDesktopTitle, 
+        mobileTitle: editMobileTitle 
+      }),
     });
     const data = await res.json();
     if (data.success) {
@@ -300,8 +322,8 @@ export default function Dashboard() {
                   <div key={item.code} style={{ padding: "16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "15px" }}>
                     <div style={{ wordBreak: "break-all", flex: 1, minWidth: "200px" }}>
                       <a href={`/r?code=${item.code}`} target="_blank" style={{ color: "#0d9488", fontWeight: "700", fontSize: "15px", textDecoration: "none" }}>{window.location.origin}/r?code={item.code}</a>
-                      <div style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>💻 Desktop: {item.desktopUrl}</div>
-                      <div style={{ fontSize: "11px", color: "#64748b" }}>📱 Mobile: {item.mobileUrl}</div>
+                      <div style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>💻 Desktop: {item.desktopUrl} {item.desktopTitle && `(${item.desktopTitle})`}</div>
+                      <div style={{ fontSize: "11px", color: "#64748b" }}>📱 Mobile: {item.mobileUrl} {item.mobileTitle && `(${item.mobileTitle})`}</div>
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
@@ -311,13 +333,19 @@ export default function Dashboard() {
                       <button onClick={() => handleCopy(item.code)} title="Copy" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="copy" size={15} color="#475569" /></button>
                       <button onClick={() => setShowDeleteModal(item.code)} title="Delete" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="trash" size={15} color="#ef4444" /></button>
 
-                      {/* Fixed Three-dot Menu Container */}
                       <div className="menu-container" style={{ position: "relative" }}>
                         <button onClick={() => setOpenMenuCode(openMenuCode === item.code ? null : item.code)} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>⋮</button>
                         
                         {openMenuCode === item.code && (
                           <div style={{ position: "absolute", right: 0, top: "38px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", zIndex: 999, width: "130px", overflow: "hidden" }}>
-                            <button onClick={() => { setEditingLink(item); setEditDesktop(item.desktopUrl); setEditMobile(item.mobileUrl); setOpenMenuCode(null); }} style={{ width: "100%", padding: "10px", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "#1e293b", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "8px" }}><Icon name="edit" size={14} /> Edit</button>
+                            <button onClick={() => { 
+                              setEditingLink(item); 
+                              setEditDesktop(item.desktopUrl); 
+                              setEditMobile(item.mobileUrl); 
+                              setEditDesktopTitle(item.desktopTitle || "");
+                              setEditMobileTitle(item.mobileTitle || "");
+                              setOpenMenuCode(null); 
+                            }} style={{ width: "100%", padding: "10px", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "#1e293b", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "8px" }}><Icon name="edit" size={14} /> Edit</button>
                             <button onClick={() => { setSelectedLinkStats(item); setOpenMenuCode(null); }} style={{ width: "100%", padding: "10px", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}><Icon name="stats" size={14} /> Statistics</button>
                           </div>
                         )}
@@ -374,10 +402,10 @@ export default function Dashboard() {
 
       </div>
 
-      {/* Create Link Modal */}
+      {/* Create Link Modal with Separate Preview Titles */}
       {showCreateModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
-          <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "420px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}>
+          <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "450px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", maxHeight: "90vh", overflowY: "auto" }}>
             <h3 style={{ margin: "0 0 18px 0", color: "#0f172a" }}>Create New Link</h3>
             <form onSubmit={handleCreateLink} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div>
@@ -385,8 +413,16 @@ export default function Dashboard() {
                 <input type="url" value={desktopUrl} onChange={(e) => setDesktopUrl(e.target.value)} placeholder="https://example.com" required style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
               </div>
               <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", marginBottom: "5px", color: "#334155" }}>Desktop Preview Title (FB Boost)</label>
+                <input type="text" value={desktopTitle} onChange={(e) => setDesktopTitle(e.target.value)} placeholder="Title for Desktop FB Preview" style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
+              </div>
+              <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: "600", marginBottom: "5px", color: "#334155" }}>Mobile URL</label>
                 <input type="url" value={mobileUrl} onChange={(e) => setMobileUrl(e.target.value)} placeholder="https://example.com" required style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", marginBottom: "5px", color: "#334155" }}>Mobile Preview Title (FB Boost)</label>
+                <input type="text" value={mobileTitle} onChange={(e) => setMobileTitle(e.target.value)} placeholder="Title for Mobile FB Preview" style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                 <button type="submit" style={{ flex: 1, padding: "11px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>Generate</button>
@@ -401,7 +437,7 @@ export default function Dashboard() {
       {/* Edit Modal */}
       {editingLink && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
-          <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "420px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}>
+          <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "450px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", maxHeight: "90vh", overflowY: "auto" }}>
             <h3 style={{ margin: "0 0 18px 0", color: "#0f172a" }}>Edit Link</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div>
@@ -409,8 +445,16 @@ export default function Dashboard() {
                 <input type="url" value={editDesktop} onChange={(e) => setEditDesktop(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
               </div>
               <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", marginBottom: "5px", color: "#334155" }}>Desktop Preview Title</label>
+                <input type="text" value={editDesktopTitle} onChange={(e) => setEditDesktopTitle(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
+              </div>
+              <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: "600", marginBottom: "5px", color: "#334155" }}>Mobile URL</label>
                 <input type="url" value={editMobile} onChange={(e) => setEditMobile(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", marginBottom: "5px", color: "#334155" }}>Mobile Preview Title</label>
+                <input type="text" value={editMobileTitle} onChange={(e) => setEditMobileTitle(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                 <button onClick={() => handleUpdateLink(editingLink.code)} style={{ flex: 1, padding: "11px", background: "#0d9488", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>Save Changes</button>
