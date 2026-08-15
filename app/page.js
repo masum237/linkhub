@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 export default function Dashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -12,7 +12,7 @@ export default function Dashboard() {
   const [linksList, setLinksList] = useState([]);
   
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(null); // Custom Delete Modal State
+  const [showDeleteModal, setShowDeleteModal] = useState(null);
   const [desktopUrl, setDesktopUrl] = useState("");
   const [mobileUrl, setMobileUrl] = useState("");
   const [message, setMessage] = useState("");
@@ -24,8 +24,6 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [toast, setToast] = useState(null);
-  
-  const menuRef = useRef(null);
 
   useEffect(() => {
     if (localStorage.getItem("isLoggedIn") === "true") setIsLoggedIn(true);
@@ -33,17 +31,17 @@ export default function Dashboard() {
     checkScreen();
     window.addEventListener("resize", checkScreen);
     
-    // Close three-dot menu on outside click anywhere on the screen
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+    // Global click to close active menu smoothly
+    const handleGlobalClick = (e) => {
+      if (!e.target.closest(".menu-container")) {
         setOpenMenuCode(null);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleGlobalClick);
     
     return () => {
       window.removeEventListener("resize", checkScreen);
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("click", handleGlobalClick);
     };
   }, []);
 
@@ -116,7 +114,6 @@ export default function Dashboard() {
     }
   };
 
-  // Custom Delete Handler using Toast instead of browser confirm
   const confirmDelete = async (code) => {
     const res = await fetch("/api/delete", {
       method: "POST",
@@ -314,12 +311,12 @@ export default function Dashboard() {
                       <button onClick={() => handleCopy(item.code)} title="Copy" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="copy" size={15} color="#475569" /></button>
                       <button onClick={() => setShowDeleteModal(item.code)} title="Delete" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="trash" size={15} color="#ef4444" /></button>
 
-                      {/* Three-dot menu with outside click handler */}
-                      <div ref={menuRef} style={{ position: "relative" }}>
+                      {/* Fixed Three-dot Menu Container */}
+                      <div className="menu-container" style={{ position: "relative" }}>
                         <button onClick={() => setOpenMenuCode(openMenuCode === item.code ? null : item.code)} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>⋮</button>
                         
                         {openMenuCode === item.code && (
-                          <div style={{ position: "absolute", right: 0, top: "35px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 4px 15px rgba(0,0,0,0.15)", zIndex: 100, width: "130px", overflow: "hidden" }}>
+                          <div style={{ position: "absolute", right: 0, top: "38px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", zIndex: 999, width: "130px", overflow: "hidden" }}>
                             <button onClick={() => { setEditingLink(item); setEditDesktop(item.desktopUrl); setEditMobile(item.mobileUrl); setOpenMenuCode(null); }} style={{ width: "100%", padding: "10px", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "#1e293b", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "8px" }}><Icon name="edit" size={14} /> Edit</button>
                             <button onClick={() => { setSelectedLinkStats(item); setOpenMenuCode(null); }} style={{ width: "100%", padding: "10px", textAlign: "left", background: "none", border: "none", cursor: "pointer", fontSize: "13px", color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}><Icon name="stats" size={14} /> Statistics</button>
                           </div>
