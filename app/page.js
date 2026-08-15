@@ -125,7 +125,7 @@ export default function Dashboard() {
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", backgroundColor: "#0f172a", color: "#f8fafc" }}>
       {/* Sidebar */}
       <div style={{ width: "260px", background: "#1e293b", borderRight: "1px solid #334155", padding: "30px 20px", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
-        <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#f8fafc", margin: "0 0 35px 10px" }}>⚡ QuickURL</h2>
+        <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#f8fafc", margin: "0 0 35px 10px" }}>⚡ LinkHub</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
           {[
             { id: "dashboard", label: "📊 Dashboard" },
