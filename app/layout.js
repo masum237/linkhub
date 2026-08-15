@@ -1,6 +1,5 @@
 import { Poppins } from "next/font/google";
 
-// Poppins ফন্টের জন্য ওয়েইট (weight) উল্লেখ করে দেওয়া হলো
 const poppins = Poppins({ 
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"]
