@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Dashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -7,48 +7,48 @@ export default function Dashboard() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("activeTab") || "dashboard";
-    }
-    return "dashboard";
-  });
-
+  const [activeTab, setActiveTab] = useState(() => (typeof window !== "undefined" ? sessionStorage.getItem("activeTab") || "dashboard" : "dashboard"));
   const [stats, setStats] = useState({ totalLinks: 0, totalVisitors: 0, todayVisitors: 0, countries: {}, devices: {}, platforms: {} });
   const [linksList, setLinksList] = useState([]);
   
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(null); // Custom Delete Modal State
   const [desktopUrl, setDesktopUrl] = useState("");
   const [mobileUrl, setMobileUrl] = useState("");
   const [message, setMessage] = useState("");
-
   const [editingLink, setEditingLink] = useState(null);
   const [editDesktop, setEditDesktop] = useState("");
   const [editMobile, setEditMobile] = useState("");
-
   const [selectedLinkStats, setSelectedLinkStats] = useState(null);
   const [openMenuCode, setOpenMenuCode] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [toast, setToast] = useState(null);
+  
+  const menuRef = useRef(null);
 
   useEffect(() => {
     if (localStorage.getItem("isLoggedIn") === "true") setIsLoggedIn(true);
     const checkScreen = () => setIsMobile(window.innerWidth <= 768);
     checkScreen();
     window.addEventListener("resize", checkScreen);
-    return () => window.removeEventListener("resize", checkScreen);
+    
+    // Close three-dot menu on outside click anywhere on the screen
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuCode(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    
+    return () => {
+      window.removeEventListener("resize", checkScreen);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-  useEffect(() => {
-    if (isLoggedIn) fetchStatsAndLinks();
-  }, [isLoggedIn, message]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("activeTab", activeTab);
-    }
-  }, [activeTab]);
+  useEffect(() => { if (isLoggedIn) fetchStatsAndLinks(); }, [isLoggedIn, message]);
+  useEffect(() => { if (typeof window !== "undefined") sessionStorage.setItem("activeTab", activeTab); }, [activeTab]);
 
   const fetchStatsAndLinks = async () => {
     try {
@@ -116,8 +116,8 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = async (code) => {
-    if (!confirm("Are you sure you want to delete this link?")) return;
+  // Custom Delete Handler using Toast instead of browser confirm
+  const confirmDelete = async (code) => {
     const res = await fetch("/api/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -126,6 +126,7 @@ export default function Dashboard() {
     const data = await res.json();
     if (data.success) {
       showToast("Link deleted successfully!");
+      setShowDeleteModal(null);
       fetchStatsAndLinks();
     } else {
       showToast("Failed to delete link", "error");
@@ -138,57 +139,15 @@ export default function Dashboard() {
   };
 
   const Icon = ({ name, size = 18, color = "currentColor" }) => {
-    if (name === "copy") {
-      return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle" }}>
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
-      );
-    }
-    if (name === "trash") {
-      return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle" }}>
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-        </svg>
-      );
-    }
-    if (name === "edit") {
-      return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle" }}>
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-      );
-    }
-    if (name === "stats") {
-      return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle" }}>
-          <line x1="18" y1="20" x2="18" y2="10"></line>
-          <line x1="12" y1="20" x2="12" y2="4"></line>
-          <line x1="6" y1="20" x2="6" y2="14"></line>
-        </svg>
-      );
-    }
-    if (name === "menu") {
-      return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle" }}>
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-      );
-    }
-    if (name === "close") {
-      return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle" }}>
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      );
-    }
-    return null;
+    const icons = {
+      copy: <><rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke={color} strokeWidth="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke={color} strokeWidth="2"/></>,
+      trash: <><polyline points="3 6 5 6 21 6" fill="none" stroke={color} strokeWidth="2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke={color} strokeWidth="2"/></>,
+      edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" fill="none" stroke={color} strokeWidth="2"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke={color} strokeWidth="2"/></>,
+      stats: <><line x1="18" y1="20" x2="18" y2="10" stroke={color} strokeWidth="2"/><line x1="12" y1="20" x2="12" y2="4" stroke={color} strokeWidth="2"/><line x1="6" y1="20" x2="6" y2="14" stroke={color} strokeWidth="2"/></>,
+      menu: <><line x1="3" y1="12" x2="21" y2="12" stroke={color} strokeWidth="2"/><line x1="3" y1="6" x2="21" y2="6" stroke={color} strokeWidth="2"/><line x1="3" y1="18" x2="21" y2="18" stroke={color} strokeWidth="2"/></>,
+      close: <><line x1="18" y1="6" x2="6" y2="18" stroke={color} strokeWidth="2"/><line x1="6" y1="6" x2="18" y2="18" stroke={color} strokeWidth="2"/></>
+    };
+    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle" }}>{icons[name]}</svg>;
   };
 
   if (!isLoggedIn) {
@@ -220,6 +179,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Sidebar */}
       <div style={{ 
         width: "260px", 
         background: "#ffffff", 
@@ -265,8 +225,10 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Main Content Area */}
       <div style={{ flex: 1, padding: "40px 20px", boxSizing: "border-box", overflowY: "auto", width: "100%", marginTop: isMobile ? "60px" : "0" }}>
         
+        {/* Dashboard Tab */}
         {activeTab === "dashboard" && (
           <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "15px", marginBottom: "25px" }}>
@@ -312,7 +274,7 @@ export default function Dashboard() {
                         <Icon name="stats" size={13} color="#64748b" /> {item.clicks || 0} Clicks
                       </span>
                       <button onClick={() => handleCopy(item.code)} title="Copy Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="copy" size={15} color="#475569" /></button>
-                      <button onClick={() => handleDelete(item.code)} title="Delete Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="trash" size={15} color="#ef4444" /></button>
+                      <button onClick={() => setShowDeleteModal(item.code)} title="Delete Link" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="trash" size={15} color="#ef4444" /></button>
                     </div>
                   </div>
                 ))
@@ -321,6 +283,7 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Short Links Tab */}
         {activeTab === "links" && (
           <div style={{ maxWidth: "900px", margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
@@ -349,9 +312,10 @@ export default function Dashboard() {
                         <Icon name="stats" size={13} color="#64748b" /> {item.clicks || 0} Clicks
                       </span>
                       <button onClick={() => handleCopy(item.code)} title="Copy" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="copy" size={15} color="#475569" /></button>
-                      <button onClick={() => handleDelete(item.code)} title="Delete" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="trash" size={15} color="#ef4444" /></button>
+                      <button onClick={() => setShowDeleteModal(item.code)} title="Delete" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 9px", borderRadius: "6px", cursor: "pointer" }}><Icon name="trash" size={15} color="#ef4444" /></button>
 
-                      <div style={{ position: "relative" }}>
+                      {/* Three-dot menu with outside click handler */}
+                      <div ref={menuRef} style={{ position: "relative" }}>
                         <button onClick={() => setOpenMenuCode(openMenuCode === item.code ? null : item.code)} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "7px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>⋮</button>
                         
                         {openMenuCode === item.code && (
@@ -369,6 +333,7 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Statistics Tab */}
         {activeTab === "stats" && (
           <div style={{ maxWidth: "850px", margin: "0 auto" }}>
             <h2 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "20px", color: "#0f172a" }}>📈 Live System Analytics</h2>
@@ -412,6 +377,7 @@ export default function Dashboard() {
 
       </div>
 
+      {/* Create Link Modal */}
       {showCreateModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
           <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "420px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}>
@@ -435,6 +401,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Edit Modal */}
       {editingLink && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
           <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "420px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}>
@@ -457,6 +424,21 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Custom Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
+          <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "380px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", textAlign: "center" }}>
+            <h3 style={{ margin: "0 0 10px 0", color: "#0f172a", fontSize: "18px" }}>Delete Link?</h3>
+            <p style={{ color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>Are you sure you want to delete this short link? This action cannot be undone.</p>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => confirmDelete(showDeleteModal)} style={{ flex: 1, padding: "11px", background: "#ef4444", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>Delete</button>
+              <button onClick={() => setShowDeleteModal(null)} style={{ flex: 1, padding: "11px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Statistics Modal */}
       {selectedLinkStats && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "15px", boxSizing: "border-box" }}>
           <div style={{ background: "#ffffff", padding: "25px", borderRadius: "16px", width: "100%", maxWidth: "420px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", maxHeight: "85vh", overflowY: "auto" }}>
@@ -487,6 +469,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Toast Notification Prompt */}
       {toast && (
         <div style={{
           position: "fixed", bottom: "20px", right: "20px", zIndex: 9999,
