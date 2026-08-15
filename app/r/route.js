@@ -31,13 +31,18 @@ export async function GET(request) {
       const targetUrl = (/mobile|android|iphone|ipad/i.test(userAgent) && linkData.mobileUrl) ? linkData.mobileUrl : linkData.desktopUrl;
 
       if (targetUrl) {
-        // রিয়েলটাইম কাউন্ট আপডেট
+        // গ্লোবাল কাউন্ট
         await redis.incr("total_visitors");
-        await redis.incr(`link:clicks:${code}`); // নির্দিষ্ট লিংকের ক্লিক
         await redis.incr(`visitors:date:${today}`);
         await redis.incr(`visitors:country:${country}`);
         await redis.incr(`visitors:device:${device}`);
         await redis.incr(`visitors:platform:${platform}`);
+
+        // নির্দিষ্ট লিংকের জন্য আলাদা কাউন্ট
+        await redis.incr(`link:clicks:${code}`);
+        await redis.incr(`link:${code}:country:${country}`);
+        await redis.incr(`link:${code}:device:${device}`);
+        await redis.incr(`link:${code}:platform:${platform}`);
 
         return new Response(`<html><head><meta http-equiv="refresh" content="0;url=${targetUrl}"></head></html>`, {
           headers: { 'Content-Type': 'text/html' },
