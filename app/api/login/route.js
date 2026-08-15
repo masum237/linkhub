@@ -1,7 +1,6 @@
 import Redis from "ioredis";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 const redis = new Redis(process.env.REDIS_URL);
 
@@ -25,18 +24,19 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Invalid password!" }, { status: 400 });
     }
 
-    // সঠিক নিয়মে কুকি সেট করার জন্য cookiesStore variable ব্যবহার করা হলো
-    const cookieStore = cookies();
-    cookieStore.set({
+    // NextResponse-এর মাধ্যমে কুকি সেট করা হলো যা Route Handler-এ কাজ করে
+    const response = NextResponse.json({ success: true, message: "Login successful" });
+    
+    response.cookies.set({
       name: "user_email",
       value: email,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24 * 7, // ১ সপ্তাহ
       path: "/",
     });
 
-    return NextResponse.json({ success: true, message: "Login successful" });
+    return response;
   } catch (error) {
     console.error("Login Server Error:", error.message);
     return NextResponse.json({ success: false, error: "Server Error: " + error.message }, { status: 500 });
