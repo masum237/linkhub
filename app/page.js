@@ -72,12 +72,13 @@ export default function Dashboard() {
   useEffect(() => { if (isLoggedIn) fetchStatsAndLinks(); }, [isLoggedIn, message]);
   useEffect(() => { if (typeof window !== "undefined") sessionStorage.setItem("activeTab", activeTab); }, [activeTab]);
 
+  // এখানে ক্যাশ ইস্যু ফিক্স করা হয়েছে (?t=${Date.now()} যোগ করে)
   const fetchStatsAndLinks = async () => {
     try {
-      const resStats = await fetch("/api/stats");
+      const resStats = await fetch(`/api/stats?t=${Date.now()}`);
       const dataStats = await resStats.json();
       setStats(dataStats);
-      const resLinks = await fetch("/api/links");
+      const resLinks = await fetch(`/api/links?t=${Date.now()}`);
       const dataLinks = await resLinks.json();
       if (dataLinks.success) setLinksList(dataLinks.links);
     } catch (error) { console.log("Failed to fetch data"); }
@@ -100,7 +101,7 @@ export default function Dashboard() {
       if (data.success) {
         setIsLoggedIn(true);
         localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("user_email", username); // ইমেইল লোকাল স্টোরেজে সেভ করা হলো
+        localStorage.setItem("user_email", username); 
         setLoginError("");
         showToast("Logged in successfully!");
       } else {
@@ -151,6 +152,7 @@ export default function Dashboard() {
     }
   };
 
+  // এখানে ডিলিট হওয়ার পর সাথে সাথে পেজ থেকে লিংক সরিয়ে দেওয়ার ব্যবস্থা করা হয়েছে
   const confirmDelete = async (code) => {
     const res = await fetch("/api/delete", {
       method: "POST",
@@ -161,6 +163,8 @@ export default function Dashboard() {
     if (data.success) {
       showToast("Link deleted successfully!");
       setShowDeleteModal(null);
+      // UI থেকে সাথে সাথে মুছে ফেলার কোড
+      setLinksList((prevLinks) => prevLinks.filter((link) => link.code !== code));
       fetchStatsAndLinks();
     } else {
       showToast("Failed to delete link", "error");
@@ -175,7 +179,7 @@ export default function Dashboard() {
   const Icon = ({ name, size = 18, color = "currentColor" }) => {
     const icons = {
       copy: <><rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke={color} strokeWidth="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke={color} strokeWidth="2"/></>,
-      trash: <><polyline points="3 6 5 6 21 6" fill="none" stroke={color} strokeWidth="2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke={color} strokeWidth="2"/></>,
+      trash: <><polyline points="3 6 5 6 21 6" fill="none" stroke={color} strokeWidth="2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2" fill="none" stroke={color} strokeWidth="2"/></>,
       edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" fill="none" stroke={color} strokeWidth="2"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke={color} strokeWidth="2"/></>,
       stats: <><line x1="18" y1="20" x2="18" y2="10" stroke={color} strokeWidth="2"/><line x1="12" y1="20" x2="12" y2="4" stroke={color} strokeWidth="2"/><line x1="6" y1="20" x2="6" y2="14" stroke={color} strokeWidth="2"/></>,
       menu: <><line x1="3" y1="12" x2="21" y2="12" stroke={color} strokeWidth="2"/><line x1="3" y1="6" x2="21" y2="6" stroke={color} strokeWidth="2"/><line x1="3" y1="18" x2="21" y2="18" stroke={color} strokeWidth="2"/></>,
