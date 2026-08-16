@@ -153,19 +153,28 @@ export default function Dashboard() {
   };
 
   // এখানে ডিলিট হওয়ার পর সাথে সাথে পেজ থেকে লিংক সরিয়ে দেওয়ার ব্যবস্থা করা হয়েছে
-  const confirmDelete = async (code) => {
+const confirmDelete = async (code) => {
     const res = await fetch("/api/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),
     });
     const data = await res.json();
+    
     if (data.success) {
       showToast("Link deleted successfully!");
       setShowDeleteModal(null);
-      // UI থেকে সাথে সাথে মুছে ফেলার কোড
+      
+      // ১. লিস্ট থেকে সাথে সাথে লিংকটি মুছে ফেলা
       setLinksList((prevLinks) => prevLinks.filter((link) => link.code !== code));
-      fetchStatsAndLinks();
+      
+      // ২. ড্যাশবোর্ডের "TOTAL LINKS" থেকে সংখ্যা ১ কমিয়ে দেওয়া
+      setStats((prevStats) => ({
+        ...prevStats,
+        totalLinks: prevStats.totalLinks > 0 ? prevStats.totalLinks - 1 : 0
+      }));
+      
+      // এখানে আর fetchStatsAndLinks() কল করা হলো না, যাতে ক্যাশ থেকে পুরোনো লিংক ফিরে না আসে।
     } else {
       showToast("Failed to delete link", "error");
     }
