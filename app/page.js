@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+export const dynamic = 'force-dynamic';
 
 export default function Dashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

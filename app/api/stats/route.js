@@ -6,7 +6,6 @@ export const revalidate = 0;
 
 export async function GET(request) {
   try {
-    // Next.js 15-এর রুলস অনুযায়ী request থেকে কুকি পড়া
     const userEmail = request.cookies.get("user_email")?.value;
 
     if (!userEmail) {
@@ -42,10 +41,14 @@ export async function GET(request) {
       }
     }
 
+    // আজকের রিয়েল-টাইম ভিজিটর ফেচ করা
+    const today = new Date().toISOString().split("T")[0];
+    const todayVisitors = Number(await redis.get(`visitors:${today}`)) || 0;
+
     return NextResponse.json({
       totalLinks: userLinks.length,
       totalVisitors,
-      todayVisitors: 0,
+      todayVisitors,
       countries,
       devices,
       platforms,
